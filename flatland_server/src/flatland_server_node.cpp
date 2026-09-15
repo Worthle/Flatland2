@@ -6,14 +6,14 @@
  *   \ \ \/\ \ \ \_/ |\ \ \/\ \L\ \ \ \L\ \/\ \L\ \ \ \_/\__, `\
  *    \ \_\ \_\ \___/  \ \_\ \___,_\ \_,__/\ \____/\ \__\/\____/
  *     \/_/\/_/\/__/    \/_/\/__,_ /\/___/  \/___/  \/__/\/___/
- * @copyright Copyright 2020 Avidbots Corp.
+ * @copyright Copyright 2017 Avidbots Corp.
  * @name	flatland_server_node.cpp
  * @brief	Load params and run the ros node for flatland_server
  * @author Joseph Duchesne
  *
  * Software License Agreement (BSD License)
  *
- *  Copyright (c) 2020, Avidbots Corp.
+ *  Copyright (c) 2017, Avidbots Corp.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -44,89 +44,99 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <rclcpp/rclcpp.hpp>
 #include <signal.h>
-
 #include <string>
 
+#include "flatland_server/debug_visualization.h"
+#include "flatland_server/ros_node.h"
 #include "flatland_server/simulation_manager.h"
-#include "rclcpp/rclcpp.hpp"
 
 /** Global variables */
-//
+flatland_server::SimulationManager *simulation_manager;
 
 /**
  * @name        SigintHandler
  * @brief       Interrupt handler - sends shutdown signal to simulation_manager
  * @param[in]   sig: signal itself
  */
-// void SigintHandler(int sig) {
-//   RCLCPP_WARN(rclcpp::get_logger("Node"), "*** Shutting down... ***");
+void SigintHandler(int sig) {
+  RCLCPP_WARN(rclcpp::get_logger("Node"), "*** Shutting down... ***");
 
-//   if (simulation_manager != nullptr) {
-//     simulation_manager->Shutdown();
-//     delete simulation_manager;
-//     simulation_manager = nullptr;
-//   }
-//   RCLCPP_INFO_STREAM_NAMED("Node", "Beginning ros shutdown");
-//   rclcpp::shutdown();
-// }
-
-class FlatlandServerNode : public rclcpp::Node
-{
-public:
-  FlatlandServerNode() : Node("flatland_server")
-  {
-    declare_parameter<std::string>("world_path");
-    declare_parameter<float>("update_rate");
-    declare_parameter<float>("step_size");
-    declare_parameter<bool>("show_viz");
-    declare_parameter<float>("viz_pub_rate");
-
-    // Load parameters
-    if (!get_parameter("world_path", world_path_)) {
-      RCLCPP_INFO(get_logger(), "No world_path parameter given!");
-      rclcpp::shutdown();
-      return;
-    }
-    get_parameter_or<float>("update_rate", update_rate_, 200.0f);
-    get_parameter_or<float>("step_size", step_size_, 1.0f / 200.0f);
-    get_parameter_or<bool>("show_viz", show_viz_, false);
-    get_parameter_or<float>("viz_pub_rate", viz_pub_rate_, 30.0f);
+  if (simulation_manager != nullptr) {
+    simulation_manager->Shutdown();
+    delete simulation_manager;
+    simulation_manager = nullptr;
   }
-
-  void Run()
-  {
-    // Create simulation manager object
-    simulation_manager_ = std::make_shared<flatland_server::SimulationManager>(
-      shared_from_this(), world_path_, update_rate_, step_size_, show_viz_, viz_pub_rate_);
-
-    RCLCPP_INFO(this->get_logger(), "Initialized");
-    simulation_manager_->Main();
-
-    RCLCPP_INFO(this->get_logger(), "Returned from simulation manager main2");
-  }
-
-  // TODO: Allow updates to step size, update rate etc. with new ros2 dynamic
-  // params
-
-private:
-  std::string world_path_;  // The file path to the world.yaml file
-  float update_rate_;       // The physics update rate (Hz)
-  float step_size_;
-  bool show_viz_;
-  float viz_pub_rate_;
-  std::shared_ptr<flatland_server::SimulationManager> simulation_manager_;
-};
+  RCLCPP_INFO(rclcpp::get_logger("Node"), "Beginning ros shutdown");
+  rclcpp::shutdown();
+}
 
 /**
  * @name        main
  * @brief       Entrypoint for Flatland Server ros node
  */
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  auto flatland_server = std::make_shared<FlatlandServerNode>();
-  flatland_server->Run();
+int main(int argc, char **argv) {
+  rclcpp::InitOptions init_options;
+  init_options.shutdown_on_signal = false;
+  rclcpp::init(argc, argv, init_options);
+
+  // Create the single, global flatland node and store it for all flatland
+  // classes to access (see ros_node.h). Allow undeclared params from overrides
+  // so world.yaml Lua $(GetParam ...) and layer params resolve from launch.
+  rclcpp::NodeOptions node_options;
+  node_options.automatically_declare_parameters_from_overrides(true);
+  node_options.allow_undeclared_parameters(true);
+  flatland_server::ros_node() =
+      std::make_shared<rclcpp::Node>("flatland", node_options);
+  auto node = flatland_server::ros_node();
+
+  // Load parameters. Parameters passed as overrides are already declared by
+  // automatically_declare_parameters_from_overrides, so guard each declaration.
+  auto declare_if_needed = [&](const std::string &name, auto default_value) {
+    if (!node->has_parameter(name)) {
+      node->declare_parameter(name, default_value);
+    }
+  };
+  declare_if_needed("world_path", std::string(""));
+  declare_if_needed("update_rate", 200.0);
+  declare_if_needed("step_size", 1 / 200.0);
+  declare_if_needed("show_viz", false);
+  declare_if_needed("viz_pub_rate", 30.0);
+  declare_if_needed("default_extrude_height", 0.0);
+
+  std::string world_path = node->get_parameter("world_path").as_string();
+  if (world_path.empty()) {
+    RCLCPP_FATAL(node->get_logger(), "No world_path parameter given!");
+    rclcpp::shutdown();
+    return 1;
+  }
+
+  double update_rate = node->get_parameter("update_rate").as_double();
+  double step_size = node->get_parameter("step_size").as_double();
+  bool show_viz = node->get_parameter("show_viz").as_bool();
+  double viz_pub_rate = node->get_parameter("viz_pub_rate").as_double();
+  double default_extrude_height =
+      node->get_parameter("default_extrude_height").as_double();
+
+  // Apply the global default 3D extrusion height to the visualizer so all
+  // polygon bodies without their own "extrude" render as 3D boxes.
+  flatland_server::DebugVisualization::Get().default_extrude_height_ =
+      default_extrude_height;
+
+  // Create simulation manager object
+  simulation_manager = new flatland_server::SimulationManager(
+      world_path, update_rate, step_size, show_viz, viz_pub_rate);
+
+  // Register sigint shutdown handler
+  signal(SIGINT, SigintHandler);
+
+  RCLCPP_INFO(node->get_logger(), "Initialized");
+  simulation_manager->Main();
+
+  RCLCPP_INFO(node->get_logger(), "Returned from simulation manager main");
+  delete simulation_manager;
+  simulation_manager = nullptr;
   rclcpp::shutdown();
   return 0;
 }

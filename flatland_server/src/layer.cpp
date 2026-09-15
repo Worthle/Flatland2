@@ -50,42 +50,53 @@
 #include <flatland_server/geometry.h>
 #include <flatland_server/layer.h>
 #include <flatland_server/yaml_reader.h>
+#include <flatland_server/ros_node.h>
+#include <rclcpp/rclcpp.hpp>
 #include <yaml-cpp/yaml.h>
-
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
 #include <fstream>
 #include <iostream>
 #include <memory>
 #include <opencv2/opencv.hpp>
-#include <rclcpp/rclcpp.hpp>
+#if CV_MAJOR_VERSION < 3
+#define GREYSCALE CV_LOAD_IMAGE_GRAYSCALE
+#else
+#include <opencv2/imgcodecs.hpp>
+#define GREYSCALE cv::ImreadModes::IMREAD_GRAYSCALE
+#endif
 #include <sstream>
 
-namespace flatland_server
-{
+namespace flatland_server {
 
-Layer::Layer(
-  std::shared_ptr<rclcpp::Node> node, b2World * physics_world, CollisionFilterRegistry * cfr,
-  const std::vector<std::string> & names, const Color & color, const Pose & origin,
-  const cv::Mat & bitmap, double occupied_thresh, double resolution, const YAML::Node & properties)
-: Entity(node, physics_world, names[0]), names_(names), cfr_(cfr), viz_name_("layers/l_" + names[0])
-{
-  body_ = new Body(physics_world_, this, name_, color, origin, b2_staticBody, properties);
+Layer::Layer(b2World *physics_world, CollisionFilterRegistry *cfr,
+             const std::vector<std::string> &names, const Color &color,
+             const Pose &origin, const cv::Mat &bitmap, double occupied_thresh,
+             double resolution, const YAML::Node &properties)
+    : Entity(physics_world, names[0]),
+      names_(names),
+      cfr_(cfr),
+      viz_name_("layer/" + names[0]) {
+  body_ = new Body(physics_world_, this, name_, color, origin, b2_staticBody,
+                   properties);
 
   LoadFromBitmap(bitmap, occupied_thresh, resolution);
 }
 
-Layer::Layer(
-  std::shared_ptr<rclcpp::Node> node, b2World * physics_world, CollisionFilterRegistry * cfr,
-  const std::vector<std::string> & names, const Color & color, const Pose & origin,
-  const std::vector<LineSegment> & line_segments, double scale, const YAML::Node & properties)
-: Entity(node, physics_world, names[0]), names_(names), cfr_(cfr), viz_name_("layers/l_" + names[0])
-{
-  body_ = new Body(physics_world_, this, name_, color, origin, b2_staticBody, properties);
+Layer::Layer(b2World *physics_world, CollisionFilterRegistry *cfr,
+             const std::vector<std::string> &names, const Color &color,
+             const Pose &origin, const std::vector<LineSegment> &line_segments,
+             double scale, const YAML::Node &properties)
+    : Entity(physics_world, names[0]),
+      names_(names),
+      cfr_(cfr),
+      viz_name_("layer/" + names[0]) {
+  body_ = new Body(physics_world_, this, name_, color, origin, b2_staticBody,
+                   properties);
 
   uint16_t category_bits = cfr_->GetCategoryBits(names_);
 
-  for (const auto & line_segment : line_segments) {
+  for (const auto &line_segment : line_segments) {
     b2EdgeShape edge;
     edge.Set(line_segment.start.Box2D(), line_segment.end.Box2D());
     edge.m_vertex1 *= scale;
@@ -95,32 +106,31 @@ Layer::Layer(
     fixture_def.shape = &edge;
     fixture_def.filter.categoryBits = category_bits;
     fixture_def.filter.maskBits = fixture_def.filter.categoryBits;
-    // todo: add material information
     body_->physics_body_->CreateFixture(&fixture_def);
   }
 }
 
-Layer::Layer(
-  std::shared_ptr<rclcpp::Node> node, b2World * physics_world, CollisionFilterRegistry * cfr,
-  const std::vector<std::string> & names, const Color & color, const YAML::Node & properties)
-: Entity(node, physics_world, names[0]), names_(names), cfr_(cfr), viz_name_("layers/l_" + names[0])
-{
-}
+Layer::Layer(b2World *physics_world, CollisionFilterRegistry *cfr,
+             const std::vector<std::string> &names, const Color &color,
+             const YAML::Node &properties)
+    : Entity(physics_world, names[0]),
+      names_(names),
+      cfr_(cfr),
+      viz_name_("layer/" + names[0]) {}
 
 Layer::~Layer() { delete body_; }
 
-const std::vector<std::string> & Layer::GetNames() const { return names_; }
+const std::vector<std::string> &Layer::GetNames() const { return names_; }
 
-const CollisionFilterRegistry * Layer::GetCfr() const { return cfr_; }
-Body * Layer::GetBody() { return body_; }
+const CollisionFilterRegistry *Layer::GetCfr() const { return cfr_; }
+Body *Layer::GetBody() { return body_; }
 
-Layer * Layer::MakeLayer(
-  std::shared_ptr<rclcpp::Node> node, b2World * physics_world, CollisionFilterRegistry * cfr,
-  const std::string & map_path, const std::vector<std::string> & names, const Color & color,
-  const YAML::Node & properties)
-{
+Layer *Layer::MakeLayer(b2World *physics_world, CollisionFilterRegistry *cfr,
+                        const std::string &map_path,
+                        const std::vector<std::string> &names,
+                        const Color &color, const YAML::Node &properties) {
   if (map_path.length() > 0) {  // If there is a map in this layer
-    YamlReader reader(node, map_path);
+    YamlReader reader(map_path);
     reader.SetErrorInfo("layer " + Q(names[0]));
 
     std::string type = reader.Get<std::string>("type", "");
@@ -133,16 +143,16 @@ Layer * Layer::MakeLayer(
         data_path = boost::filesystem::path(map_path).parent_path() / data_path;
       }
 
-      RCLCPP_INFO(
-        rclcpp::get_logger("Layer"), "layer \"%s\" loading line segments from path=\"%s\"",
-        names[0].c_str(), data_path.string().c_str());
+      RCLCPP_INFO(rclcpp::get_logger("Layer"),
+                     "layer \"%s\" loading line segments from path=\"%s\"",
+                     names[0].c_str(), data_path.string().c_str());
 
       std::vector<LineSegment> line_segments;
 
       ReadLineSegmentsFile(data_path.string(), line_segments);
 
-      return new Layer(
-        node, physics_world, cfr, names, color, origin, line_segments, scale, properties);
+      return new Layer(physics_world, cfr, names, color, origin, line_segments,
+                       scale, properties);
 
     } else {
       double resolution = reader.Get<double>("resolution");
@@ -151,34 +161,32 @@ Layer * Layer::MakeLayer(
 
       boost::filesystem::path image_path(reader.Get<std::string>("image"));
       if (image_path.string().front() != '/') {
-        image_path = boost::filesystem::path(map_path).parent_path() / image_path;
+        image_path =
+            boost::filesystem::path(map_path).parent_path() / image_path;
       }
 
-      RCLCPP_INFO(
-        rclcpp::get_logger("Layer"), "layer \"%s\" loading image from path=\"%s\"",
-        names[0].c_str(), image_path.string().c_str());
+      RCLCPP_INFO(rclcpp::get_logger("Layer"), "layer \"%s\" loading image from path=\"%s\"",
+                     names[0].c_str(), image_path.string().c_str());
 
-      cv::Mat map = cv::imread(image_path.string(), cv::IMREAD_GRAYSCALE);
+      cv::Mat map = cv::imread(image_path.string(), GREYSCALE);
       if (map.empty()) {
-        throw YAMLException(
-          "Failed to load " + Q(image_path.string()) + " in layer " + Q(names[0]));
+        throw YAMLException("Failed to load " + Q(image_path.string()) +
+                            " in layer " + Q(names[0]));
       }
 
       cv::Mat bitmap;
       map.convertTo(bitmap, CV_32FC1, 1.0 / 255.0);
 
-      return new Layer(
-        node, physics_world, cfr, names, color, origin, bitmap, occupied_thresh, resolution,
-        properties);
+      return new Layer(physics_world, cfr, names, color, origin, bitmap,
+                       occupied_thresh, resolution, properties);
     }
   } else {  // If the layer has no static obstacles
-    return new Layer(node, physics_world, cfr, names, color, properties);
+    return new Layer(physics_world, cfr, names, color, properties);
   }
 }
 
-void Layer::ReadLineSegmentsFile(
-  const std::string & file_path, std::vector<LineSegment> & line_segments)
-{
+void Layer::ReadLineSegmentsFile(const std::string &file_path,
+                                 std::vector<LineSegment> &line_segments) {
   std::ifstream in_file(file_path);
   std::string line;
   int line_count = 0;
@@ -199,8 +207,9 @@ void Layer::ReadLineSegmentsFile(
 
       if (ss.fail()) {
         throw Exception(
-          "Flatland File: Failed to read line segment from line " + std::to_string(line_count) +
-          ", in file " + Q(boost::filesystem::path(file_path).filename().string()));
+            "Flatland File: Failed to read line segment from line " +
+            std::to_string(line_count) + ", in file " +
+            Q(boost::filesystem::path(file_path).filename().string()));
       }
     }
 
@@ -208,130 +217,110 @@ void Layer::ReadLineSegmentsFile(
   }
 }
 
-void Layer::LoadFromBitmap(const cv::Mat & bitmap, double occupied_thresh, double resolution)
-{
+void Layer::LoadFromBitmap(const cv::Mat &bitmap, double occupied_thresh,
+                           double resolution) {
   uint16_t category_bits = cfr_->GetCategoryBits(names_);
 
-  auto add_edge = [&](double x1, double y1, double x2, double y2) {
-    b2EdgeShape edge;
+  uint32_t edges_added = 0;
+
+  auto add_poly = [&](std::vector<cv::Point2f>& poly) {
+    b2ChainShape polygon_chain;
     double rows = bitmap.rows;
     double res = resolution;
 
-    edge.Set(b2Vec2(res * x1, res * (rows - y1)), b2Vec2(res * x2, res * (rows - y2)));
+    std::vector<b2Vec2> poly_b2;
+    poly_b2.reserve(poly.size());
+    for(auto& p : poly) {
+      poly_b2.emplace_back(res * p.x, res * (rows - p.y));
+    }
+
+    polygon_chain.CreateLoop(&poly_b2.front(), poly_b2.size());
 
     b2FixtureDef fixture_def;
-    fixture_def.shape = &edge;
+    fixture_def.shape = &polygon_chain;
     fixture_def.filter.categoryBits = category_bits;
     fixture_def.filter.maskBits = fixture_def.filter.categoryBits;
     body_->physics_body_->CreateFixture(&fixture_def);
+
+    edges_added += poly.size();
   };
 
   cv::Mat padded_map, obstacle_map;
 
   // thresholds the map, values between the occupied threshold and 1.0 are
   // considered to be occupied
-  cv::inRange(bitmap, occupied_thresh, 1.0, obstacle_map);
+  cv::inRange(bitmap, occupied_thresh, 1.0, obstacle_map); 
 
-  // pad the top and bottom of the map each with an empty row (255=white). This
-  // helps to look at the transition from one row of pixel to another
-  cv::copyMakeBorder(obstacle_map, padded_map, 1, 1, 0, 0, cv::BORDER_CONSTANT, 255);
-
-  // loop through all the rows, looking at 2 at once
-  for (int i = 0; i < padded_map.rows - 1; i++) {
-    cv::Mat row1 = padded_map.row(i);
-    cv::Mat row2 = padded_map.row(i + 1);
-    cv::Mat diff;
-
-    // if the two row are the same value, there is no edge
-    // if the two rows are not the same value, there is an edge
-    // result is still binary, either 255 or 0
-    cv::absdiff(row1, row2, diff);
-
-    int start = 0;
-    bool started = false;
-
-    // find all the walls, put the connected walls as a single line segment
-    for (unsigned int j = 0; j <= diff.total(); j++) {
-      bool edge_exists = false;
-      if (j < diff.total()) {
-        edge_exists = diff.at<uint8_t>(0, j);  // 255 maps to true
-      }
-
-      if (edge_exists && !started) {
-        start = j;
-        started = true;
-      } else if (started && !edge_exists) {
-        add_edge(start, i, j, i);
-
-        started = false;
-      }
+  // simplify_map rosparam: 0=None, 1=moderate, 2=maximum simplification of map polygon outlines
+  int simplify = 0;
+  {
+    auto node = ros_node();
+    if (!node->has_parameter("simplify_map")) {
+      node->declare_parameter<int>("simplify_map", 0);
     }
+    simplify = node->get_parameter("simplify_map").as_int();
+  }
+  
+  std::vector<std::vector<cv::Point>> vectors_outline;
+  cv::Mat obstacle_map_open;
+  if (simplify >= 2) {
+    int open_kernel_size = 3;  // 0.15m at 5cm pixel resolution
+    cv::Mat kernel = cv::getStructuringElement( cv::MORPH_ELLIPSE, {open_kernel_size*2+1, open_kernel_size*2+1});
+    cv::morphologyEx(obstacle_map, obstacle_map_open, cv::MORPH_OPEN, kernel); 
+  } else {
+    obstacle_map_open = obstacle_map.clone();
   }
 
-  // pad the left and right of the map each with an empty column (255).
-  cv::copyMakeBorder(obstacle_map, padded_map, 0, 0, 1, 1, cv::BORDER_CONSTANT, 255);
+  cv::findContours(obstacle_map_open, vectors_outline, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
+  for (auto& polygon : vectors_outline) {
+    std::vector<cv::Point2f> polygon2f;  // create a double rep. for RDP accuracy
+    std::transform(polygon.begin(), polygon.end(), std::back_inserter(polygon2f),
+               [](const cv::Point& p) { return (cv::Point2f)p; });
+    std::vector<cv::Point2f>& poly_to_use = polygon2f;
 
-  // loop through all the columns, looking at 2 at once
-  for (int i = 0; i < padded_map.cols - 1; i++) {
-    cv::Mat col1 = padded_map.col(i);
-    cv::Mat col2 = padded_map.col(i + 1);
-    cv::Mat diff;
-
-    cv::absdiff(col1, col2, diff);
-
-    int start = 0;
-    bool started = false;
-
-    for (unsigned int j = 0; j <= diff.total(); j++) {
-      bool edge_exists = false;
-      if (j < diff.total()) {
-        edge_exists = diff.at<uint8_t>(j, 0);
-      }
-
-      if (edge_exists && !started) {
-        start = j;
-        started = true;
-      } else if (started && !edge_exists) {
-        add_edge(i, start, i, j);
-
-        started = false;
-      }
+    
+    if (simplify >= 1) {
+      std::vector<cv::Point2f> polygon_rdp;
+      cv::approxPolyDP(polygon2f, polygon_rdp, 1.0, true);  // RDP reduction
+      if (polygon_rdp.size()>4) poly_to_use = polygon_rdp;
     }
+
+    add_poly(poly_to_use);
   }
+
+  RCLCPP_INFO(rclcpp::get_logger("Layer"), "added %d line segments", edges_added);
 }
 
-void Layer::DebugVisualize() const
-{
+void Layer::DebugVisualize() const {
   // Don't try to visualized uninitalized layers
   if (viz_name_.length() == 0) {
     return;
   }
 
-  DebugVisualization::Get(node_)->Reset(viz_name_);
-  DebugVisualization::Get(node_)->Reset(viz_name_ + "_3d");
+  DebugVisualization::Get().Reset(viz_name_);
+  DebugVisualization::Get().Reset(viz_name_ + "_3d");
 
   if (body_ != nullptr) {
-    DebugVisualization::Get(node_)->Visualize(
-      viz_name_, body_->physics_body_, body_->color_.r, body_->color_.g, body_->color_.b,
-      body_->color_.a);
-    DebugVisualization::Get(node_)->VisualizeLayer(viz_name_ + "_3d", body_);
+    DebugVisualization::Get().Visualize(viz_name_, body_->physics_body_,
+                                        body_->color_.r, body_->color_.g,
+                                        body_->color_.b, body_->color_.a);
+    DebugVisualization::Get().VisualizeLayer(viz_name_ + "_3d", body_);
   }
 }
 
-void Layer::DebugOutput() const
-{
+void Layer::DebugOutput() const {
   std::string names = "{" + boost::algorithm::join(names_, ",") + "}";
   uint16_t category_bits = cfr_->GetCategoryBits(names_);
 
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("Layer"),
-    "Layer %p: physics_world(%p) name(%s) names(%s) "
-    "category_bits(0x%X)",
-    this, physics_world_, name_.c_str(), names.c_str(), category_bits);
+  RCLCPP_DEBUG(rclcpp::get_logger("Layer"),
+                  "Layer %p: physics_world(%p) name(%s) names(%s) "
+                  "category_bits(0x%X)",
+                  this, physics_world_, name_.c_str(), names.c_str(),
+                  category_bits);
 
   if (body_ != nullptr) {
     body_->DebugOutput();
   }
 }
 
-}  // namespace flatland_server
+};  // namespace flatland_server

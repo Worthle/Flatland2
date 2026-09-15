@@ -1,0 +1,21 @@
+# Send only the files used by the Flatland image to Docker.
+*
+!Dockerfile
+!docker-entrypoint.sh
+!flatland/
+!flatland/**
+!flatland_core/
+!flatland_core/**
+!flatland_msgs/
+!flatland_msgs/**
+!flatland_plugins/
+!flatland_plugins/**
+!flatland_server/
+!flatland_server/**
+!flatland_viz/
+!flatland_viz/**
+**/__pycache__/
+**/*.pyc
+**/build/
+**/install/
+**/log/

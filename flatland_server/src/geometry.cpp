@@ -45,13 +45,10 @@
  */
 
 #include "flatland_server/geometry.h"
-
 #include <Box2D/Box2D.h>
-
 #include <cmath>
 
-namespace flatland_server
-{
+namespace flatland_server {
 
 /**
  * @brief Return a RotateTranslate given translation and rotation
@@ -62,8 +59,7 @@ namespace flatland_server
  *
  * @return THe RotateTranslate object
  */
-RotateTranslate Geometry::CreateTransform(double dx, double dy, double a)
-{
+RotateTranslate Geometry::CreateTransform(double dx, double dy, double a) {
   RotateTranslate out = {dx, dy, cosf(a), sinf(a)};
   return out;
 }
@@ -76,19 +72,17 @@ RotateTranslate Geometry::CreateTransform(double dx, double dy, double a)
  *
  * @return
  */
-b2Vec2 Geometry::Transform(const b2Vec2 & in, const RotateTranslate & rt)
-{
+b2Vec2 Geometry::Transform(const b2Vec2& in, const RotateTranslate& rt) {
   b2Vec2 out;
   out.x = in.x * rt.cos - in.y * rt.sin + rt.dx;
   out.y = in.x * rt.sin + in.y * rt.cos + rt.dy;
   return out;
 }
 
-b2Vec2 Geometry::InverseTransform(const b2Vec2 & in, const RotateTranslate & rt)
-{
+b2Vec2 Geometry::InverseTransform(const b2Vec2& in, const RotateTranslate& rt) {
   b2Vec2 out;
   out.x = (in.x - rt.dx) * rt.cos + (in.y - rt.dy) * rt.sin;
   out.y = -(in.x - rt.dx) * rt.sin + (in.y - rt.dy) * rt.cos;
   return out;
 }
-};  // namespace flatland_server
+};

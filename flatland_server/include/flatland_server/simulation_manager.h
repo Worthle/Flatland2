@@ -51,24 +51,21 @@
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/timekeeper.h>
 #include <flatland_server/world.h>
-
-#include <rclcpp/rclcpp.hpp>
 #include <string>
 
-namespace flatland_server
-{
+namespace flatland_server {
 
-class SimulationManager
-{
-public:
-  std::shared_ptr<rclcpp::Node> node_;
+class SimulationManager {
+ public:
   bool run_simulator_;           ///<  While true, keep running the sim loop
-  World * world_;                ///< Simulation world
+  World *world_;                 ///< Simulation world
   double update_rate_;           ///< sim loop rate
   double step_size_;             ///< step size
   bool show_viz_;                ///< flag to determine if to show visualization
   double viz_pub_rate_;          ///< rate to publish visualization
   std::string world_yaml_file_;  ///< path to the world file
+  Timekeeper timekeeper_;        ///< Timekeeper manager
+  uint64_t iterations_ = 0;      ///< Main loop iteration count (for debugging/profiling)
 
   /**
    * @name  Simulation Manager constructor
@@ -79,26 +76,19 @@ public:
    * @param[in] viz_pub_rate rate to publish visualization
    * behaving ones
    */
-  SimulationManager(
-    std::shared_ptr<rclcpp::Node> node, std::string world_yaml_file, double update_rate,
-    double step_size, bool show_viz, double viz_pub_rate);
-
-  ~SimulationManager();
+  SimulationManager(std::string world_yaml_file, double update_rate,
+                    double step_size, bool show_viz, double viz_pub_rate);
 
   /**
    * This method contains the loop that runs the simulation
+   * @param[in] benchmark optional, default false, ignore update timer (run as fast as possible)
    */
-  void Main();
+  void Main(bool benchmark=false);
 
   /**
    * Kill the world
    */
   void Shutdown();
-
-  void setUpdateRate(double update_rate);
-
-private:
-  rclcpp::WallRate * rate_;
 };
-}  // namespace flatland_server
+};      // namespace flatland_server
 #endif  // FLATLAND_SERVER_SIMULATION_MANAGER_H

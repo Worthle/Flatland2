@@ -1,92 +1,122 @@
 /*
- *  ______                   __  __              __
- * /\  _  \           __    /\ \/\ \            /\ \__
- * \ \ \L\ \  __  __ /\_\   \_\ \ \ \____    ___\ \ ,_\   ____
- *  \ \  __ \/\ \/\ \\/\ \  /'_` \ \ '__`\  / __`\ \ \/  /',__\
- *   \ \ \/\ \ \ \_/ |\ \ \/\ \L\ \ \ \L\ \/\ \L\ \ \ \_/\__, `\
- *    \ \_\ \_\ \___/  \ \_\ \___,_\ \_,__/\ \____/\ \__\/\____/
- *     \/_/\/_/\/__/    \/_/\/__,_ /\/___/  \/___/  \/__/\/___/
- * @copyright Copyright 2017 Avidbots Corp.
  * @name   flatland_viz_node.cpp
- * @brief  The main ROS node for flatland_viz
- * @author Joseph Duchesne
+ * @brief  ROS 2 rviz2-based visualization app for flatland.
  *
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2017, Avidbots Corp.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the Avidbots Corp. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
+ * Builds on rviz_common::VisualizationFrame (the standard rviz2 window, which
+ * provides the menus / toolbar / tool add-remove / config load-save that the
+ * ROS 1 flatland_viz reimplemented by hand). On top of that it:
+ *   - loads the rviz config passed with -d,
+ *   - adds the custom flatland SpawnModel and PauseSim tools,
+ *   - auto-creates a MarkerArray display for every flatland debug topic
+ *     advertised on /flatland_server/debug/topics.
  */
 
-#include <signal.h>
+#include <map>
+#include <mutex>
+#include <string>
+#include <vector>
 
 #include <QApplication>
+#include <QString>
+#include <QTimer>
+
 #include <rclcpp/rclcpp.hpp>
 
-#include "flatland_viz/flatland_window.h"
+#include <rviz_common/display.hpp>
+#include <rviz_common/properties/property.hpp>
+#include <rviz_common/ros_integration/ros_node_abstraction.hpp>
+#include <rviz_common/tool_manager.hpp>
+#include <rviz_common/visualization_frame.hpp>
+#include <rviz_common/visualization_manager.hpp>
 
-FlatlandWindow * window = nullptr;
+#include <flatland_msgs/msg/debug_topic_list.hpp>
 
-/**
- * @name        SigintHandler
- * @brief       Interrupt handler - sends shutdown signal to simulation_manager
- * @param[in]   sig: signal itself
- */
-void SigintHandler(int sig)
-{
-  RCLCPP_WARN(rclcpp::get_logger("Node"), "*** Shutting down... ***");
+int main(int argc, char **argv) {
+  rclcpp::init(argc, argv);
 
-  if (window != nullptr) {
-    delete window;
-    window = nullptr;
-  }
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("Flatland Viz"), "Beginning ros shutdown");
-  rclcpp::shutdown();
-}
-
-int main(int argc, char ** argv)
-{
-  if (!rclcpp::isInitialized()) {
-    rclcpp::init(argc, argv);
+  // Parse "-d <config>" like rviz.
+  QString config_path;
+  for (int i = 1; i < argc; ++i) {
+    if ((std::string(argv[i]) == "-d" ||
+         std::string(argv[i]) == "--display-config") &&
+        i + 1 < argc) {
+      config_path = QString::fromLocal8Bit(argv[i + 1]);
+      ++i;
+    }
   }
 
   QApplication app(argc, argv);
 
-  window = new FlatlandWindow();
-  window->show();
+  auto rviz_ros_node =
+      std::make_shared<rviz_common::ros_integration::RosNodeAbstraction>(
+          "flatland_viz");
 
-  // Register sigint shutdown handler
-  signal(SIGINT, SigintHandler);
+  auto *frame = new rviz_common::VisualizationFrame(rviz_ros_node);
+  frame->setApp(&app);
+  frame->initialize(rviz_ros_node, config_path);
+  frame->show();
+
+  auto *manager = frame->getManager();
+  manager->getToolManager()->addTool("flatland_viz/SpawnModel");
+  manager->getToolManager()->addTool("flatland_viz/PauseSim");
+
+  // Auto-create / remove MarkerArray displays for flatland debug topics.
+  auto node = rviz_ros_node->get_raw_node();
+  std::mutex topics_mutex;
+  std::vector<std::string> latest_topics;
+  bool dirty = false;
+  std::map<std::string, rviz_common::Display *> debug_displays;
+
+  auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
+  auto sub = node->create_subscription<flatland_msgs::msg::DebugTopicList>(
+      "/flatland_server/debug/topics", qos,
+      [&](const flatland_msgs::msg::DebugTopicList::SharedPtr msg) {
+        std::lock_guard<std::mutex> lock(topics_mutex);
+        latest_topics = msg->topics;
+        dirty = true;
+      });
+
+  QTimer debug_timer;
+  QObject::connect(&debug_timer, &QTimer::timeout, [&]() {
+    std::vector<std::string> topics;
+    {
+      std::lock_guard<std::mutex> lock(topics_mutex);
+      if (!dirty) {
+        return;
+      }
+      topics = latest_topics;
+      dirty = false;
+    }
+
+    // Remove displays whose topic disappeared.
+    for (auto it = debug_displays.begin(); it != debug_displays.end();) {
+      if (std::count(topics.begin(), topics.end(), it->first) == 0) {
+        delete it->second;
+        it = debug_displays.erase(it);
+      } else {
+        ++it;
+      }
+    }
+
+    // Add displays for new topics.
+    for (const auto &topic : topics) {
+      if (debug_displays.count(topic) == 0) {
+        rviz_common::Display *display = manager->createDisplay(
+            "rviz_default_plugins/MarkerArray",
+            QString::fromLocal8Bit(topic.c_str()), true);
+        if (display) {
+          QString topic_qt = QString::fromLocal8Bit(
+              (std::string("/flatland_server/debug/") + topic).c_str());
+          display->subProp("Topic")->setValue(topic_qt);
+          debug_displays[topic] = display;
+        }
+      }
+    }
+  });
+  debug_timer.start(250);
 
   app.exec();
 
-  delete window;
-  window = nullptr;
+  rclcpp::shutdown();
   return 0;
 }

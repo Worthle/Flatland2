@@ -45,33 +45,41 @@
  */
 
 #include <flatland_server/model_plugin.h>
+#include <flatland_server/ros_node.h>
 
-namespace flatland_server
-{
+namespace flatland_server {
 
-Model * ModelPlugin::GetModel() { return model_; }
+Model *ModelPlugin::GetModel() { return model_; }
 
-void ModelPlugin::Initialize(
-  rclcpp::Node::SharedPtr node, const std::string & type, const std::string & name, Model * model,
-  const YAML::Node & config)
-{
+void ModelPlugin::Initialize(const std::string &type, const std::string &name,
+                             Model *model, const YAML::Node &config) {
   type_ = type;
   name_ = name;
   model_ = model;
   plugin_type_ = PluginType::Model;
-  node_ = node;
+
+  // ROS 1 created a NodeHandle in the model's namespace so all topics
+  // advertised by the plugin were prefixed with it. The ROS 2 equivalent is a
+  // sub-node, which prepends the namespace to relative topic names.
+  std::string ns = model_->namespace_;
+  while (!ns.empty() && ns.front() == '/') ns.erase(ns.begin());
+  if (ns.empty()) {
+    nh_ = ros_node();
+  } else {
+    nh_ = ros_node()->create_sub_node(ns);
+  }
   OnInitialize(config);
 }
 
-bool ModelPlugin::FilterContact(
-  b2Contact * contact, Entity *& entity, b2Fixture *& this_fixture, b2Fixture *& other_fixture)
-{
-  b2Fixture * f_A = contact->GetFixtureA();
-  b2Fixture * f_B = contact->GetFixtureB();
-  Body * b_A = static_cast<Body *>(f_A->GetBody()->GetUserData());
-  Body * b_B = static_cast<Body *>(f_B->GetBody()->GetUserData());
-  Entity * e_A = b_A->GetEntity();
-  Entity * e_B = b_B->GetEntity();
+bool ModelPlugin::FilterContact(b2Contact *contact, Entity *&entity,
+                                b2Fixture *&this_fixture,
+                                b2Fixture *&other_fixture) {
+  b2Fixture *f_A = contact->GetFixtureA();
+  b2Fixture *f_B = contact->GetFixtureB();
+  Body *b_A = static_cast<Body *>(f_A->GetBody()->GetUserData());
+  Body *b_B = static_cast<Body *>(f_B->GetBody()->GetUserData());
+  Entity *e_A = b_A->GetEntity();
+  Entity *e_B = b_B->GetEntity();
 
   if (e_A == model_) {
     entity = e_B;
@@ -87,11 +95,10 @@ bool ModelPlugin::FilterContact(
   return true;
 }
 
-bool ModelPlugin::FilterContact(b2Contact * contact)
-{
+bool ModelPlugin::FilterContact(b2Contact *contact) {
   b2Fixture *f1, *f2;
-  Entity * e;
+  Entity *e;
   return FilterContact(contact, e, f1, f2);
 }
 
-}  // namespace flatland_server
+};  // namespace flatland_server

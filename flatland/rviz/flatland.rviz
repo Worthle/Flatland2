@@ -1,0 +1,76 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Global Options:
+    Background Color: 35; 39; 44
+    Fixed Frame: map
+    Frame Rate: 30
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Cell Size: 1
+      Plane Cell Count: 30
+    - Class: rviz_default_plugins/Map
+      Name: Warehouse
+      Enabled: true
+      Alpha: 0.7
+      Topic:
+        Value: /map
+        Depth: 1
+        Durability Policy: Transient Local
+        Reliability Policy: Reliable
+    - Class: rviz_default_plugins/LaserScan
+      Name: Laser scan
+      Enabled: true
+      Color Transformer: FlatColor
+      Color: 0; 100; 255
+      Size (m): 0.035
+      Topic:
+        Value: /scan
+        Depth: 5
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/PointCloud2
+      Name: 3D lidar
+      Enabled: true
+      Style: Points
+      Size (Pixels): 2
+      Decay Time: 0
+      Color Transformer: FlatColor
+      Color: 255; 35; 35
+      Size (m): 0.04
+      Topic:
+        Value: /lidar_points
+        Depth: 1
+        Reliability Policy: Best Effort
+    - Class: rviz_default_plugins/PoseArray
+      Name: Mock detections
+      Enabled: true
+      Topic:
+        Value: /detections
+        Depth: 5
+    - Class: rviz_default_plugins/TF
+      Name: TF
+      Enabled: false
+      Show Axes: true
+      Show Names: true
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/SetInitialPose
+      Topic: /initialpose
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 27
+      Pitch: 0.95
+      Yaw: 0.8
+      Focal Point: {X: 0, Y: -1, Z: 0}
+Window Geometry:
+  Width: 1280
+  Height: 800

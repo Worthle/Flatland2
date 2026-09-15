@@ -1,0 +1,31 @@
+name: ROS 2 Humble
+
+on:
+  push:
+    branches: [flatland2]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-smoke:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check launcher and Compose configuration
+        run: |
+          bash -n docker.sh docker-entrypoint.sh
+          python3 flatland/tests/docker_launcher.py
+          docker compose config --quiet
+      - name: Build all six packages
+        run: docker build --build-arg BUILD_JOBS=2 -t flatland2:humble-fork .
+      - name: Verify installed assets and dynamics
+        run: |
+          docker run --rm --network none flatland2:humble-fork python3 /flatland_ws/install/flatland/share/flatland/tests/verify_assets.py
+          docker run --rm --network none flatland2:humble-fork python3 /flatland_ws/install/flatland/share/flatland/tests/dynamics.py
+      - name: Smoke test ROS interfaces and model spawning
+        run: |
+          docker run --rm --network none -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp flatland2:humble-fork python3 /flatland_ws/install/flatland/share/flatland/tests/smoke.py --robot turtlebot --spawn-probe

@@ -10,3 +10,14 @@ docs/_templates/*
 */.history
 **/.idea/
 **/cmake-build-debug/
+
+# Local builds, editor files, and the separate physics-engine project.
+/build/
+/install/
+/log/
+/.work/
+/Lev/
+/LevSim-Ogre.log
+__pycache__/
+*.pyc
+.DS_Store

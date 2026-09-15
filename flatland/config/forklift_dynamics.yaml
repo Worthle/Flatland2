@@ -1,0 +1,33 @@
+# Synthetic teaching coefficients, not identified from a real vehicle.
+# Steering approximation is intended for small angles.
+sample_rate_hz: 10.0
+sub_models:
+  meas_linear_velocity:
+    output_name: meas_linear_velocity
+    input_names: [cmd_speed]
+    ylag: 1
+    xlag: 1
+    degree: 1
+    sample_rate_hz: 10
+    terms:
+    - theta: 0.7
+      factors:
+      - [y, 1]
+    - theta: 0.3
+      factors:
+      - [x1, 1]
+  meas_angular_velocity:
+    output_name: meas_angular_velocity
+    input_names: [cmd_speed, cmd_steering_angle]
+    ylag: 1
+    xlag: 1
+    degree: 2
+    sample_rate_hz: 10
+    terms:
+    - theta: 0.7
+      factors:
+      - [y, 1]
+    - theta: 0.2727272727272727
+      factors:
+      - [x1, 1]
+      - [x2, 1]

@@ -1,27 +1,28 @@
 <?xml version="1.0"?>
-<?xml-model href="http://download.ros.org/schema/package_format2.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
-<package format="2">
+<package format="3">
   <name>flatland</name>
   <version>2.0.0</version>
-  <description>
-    This is the metapackage for flatland.
-  </description>
-  <maintainer email="joseph@avidbots.com">Joseph Duchesne</maintainer>
-  <license>BSD</license>
-
+  <description>Flatland 2 ROS 2 Humble bringup, robot models and warehouse assets.</description>
+  <maintainer email="leventfaruksoysal6@gmail.com">Worthle</maintainer>
+  <license>BSD-3-Clause</license>
+  <url type="website">https://github.com/Worthle</url>
   <buildtool_depend>ament_cmake</buildtool_depend>
-
-  <exec_depend>flatland_msgs</exec_depend>
-  <!--
-  <exec_depend>flatland_plugins</exec_depend>
-  <exec_depend>flatland_server</exec_depend>
-  <exec_depend>flatland_viz</exec_depend>
-  -->
-
-  <test_depend>ament_lint_auto</test_depend>
-  <test_depend>ament_lint_common</test_depend>
-
-  <export>
-    <build_type>ament_cmake</build_type>
-  </export>
+  <exec_depend>flatland_core</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>ackermann_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <export><build_type>ament_cmake</build_type></export>
 </package>

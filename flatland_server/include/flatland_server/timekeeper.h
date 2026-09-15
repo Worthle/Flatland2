@@ -47,20 +47,15 @@
 #ifndef FLATLAND_SERVER_TIME_KEEPER_H
 #define FLATLAND_SERVER_TIME_KEEPER_H
 
-#include <rclcpp/clock.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <rclcpp/time.hpp>
-#include <rclcpp/time_source.hpp>
+#include <rosgraph_msgs/msg/clock.hpp>
 
-namespace flatland_server
-{
+namespace flatland_server {
 
-class Timekeeper
-{
-public:
+class Timekeeper {
+ public:
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr
-    clock_pub_;                    ///< the topic to publish the clock
-  rclcpp::Node::SharedPtr node_;   /// ROS node parent
+      clock_pub_;                  ///< the topic to publish the clock
   rclcpp::Time time_;              ///< simulation time
   double max_step_size_;           ///< maximum step size
   const std::string clock_topic_;  ///< the name of the clock topic
@@ -68,7 +63,7 @@ public:
   /**
    * @brief constructor
    */
-  Timekeeper(rclcpp::Node::SharedPtr node);
+  Timekeeper();
 
   /**
    * @brief Step time once with the current set of parameters
@@ -89,7 +84,7 @@ public:
   /**
    * @return The current simulation time
    */
-  const rclcpp::Time & GetSimTime() const;
+  const rclcpp::Time& GetSimTime() const;
 
   /**
    * @return The current step size used for the world
@@ -101,5 +96,5 @@ public:
    */
   double GetMaxStepSize() const;
 };
-}  // namespace flatland_server
+};      // namespace flatland_server
 #endif  // FLATLAND_SERVER_TIME_KEEPER_H

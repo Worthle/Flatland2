@@ -1,0 +1,7 @@
+# Attach (weld) another model to the model running the LinkAttacher plugin.
+# Leave model_name empty to auto-select the nearest attachable model (by the
+# plugin's model_prefixes) within its capture range.
+string model_name
+---
+bool success
+string message

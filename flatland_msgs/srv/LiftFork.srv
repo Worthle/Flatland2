@@ -1,0 +1,8 @@
+# Command the forklift forks to a fraction of the configured lift_height:
+# 0.0 = fully lowered, 1.0 = fully lifted (e.g. with lift_height 4.0 a
+# fraction of 0.5 moves the forks to 2.0 m). Requests outside [0, 1] are
+# rejected.
+float64 fraction
+---
+bool success
+string message

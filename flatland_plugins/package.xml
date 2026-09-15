@@ -3,36 +3,32 @@
 <package format="3">
   <name>flatland_plugins</name>
   <version>2.0.0</version>
-  <description>Default plugins for flatland</description>
-  <license>BSD</license>
-  <url type="website">https://github.com/avidbots/flatland</url>
+  <description>The flatland_plugins package (ROS 2)</description>
+  <license>BSD-3-Clause</license>
+  <url type="website">https://github.com/Worthle</url>
 
-  <maintainer email="joseph@avidbots.com">Joseph Duchesne</maintainer>
+  <maintainer email="leventfaruksoysal6@gmail.com">Worthle</maintainer>
   <author email="joseph@avidbots.com">Joseph Duchesne</author>
-  <author>Chunshang Li</author>
-  <author>Mike Brousseau</author>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>libopencv-dev</depend>
-  <depend>pluginlib</depend>
   <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
-  <depend>nav_msgs</depend>
-  <depend>sensor_msgs</depend>
-  <depend>geometry_msgs</depend>
-  <depend>tf2</depend>
-  <depend>tf2_geometry_msgs</depend>
-  <depend>tf2_ros</depend>
-  <depend>yaml_cpp_vendor</depend>
-  <depend>flatland_msgs</depend>
+  <depend>ament_index_cpp</depend>
+  <depend>pluginlib</depend>
   <depend>flatland_server</depend>
+  <depend>flatland_msgs</depend>
+  <depend>std_msgs</depend>
+  <depend>std_srvs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>sensor_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>interactive_markers</depend>
-  <depend>lua-dev</depend>
-  <depend>libboost-date-time-dev</depend>
-  <depend>libboost-filesystem-dev</depend>
-  <depend>libboost-dev</depend>
+  <depend>ackermann_msgs</depend>
+  <depend>tf2</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+  <depend>eigen</depend>
+  <depend>yaml-cpp</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

@@ -52,21 +52,41 @@
 #include <flatland_server/yaml_reader.h>
 #include <yaml-cpp/yaml.h>
 
-namespace flatland_server
-{
+namespace flatland_server {
 
 /**
  * This class defines a body in the simulation. It wraps around the Box2D
  * physics body providing extra data and useful methods
  */
-class Body
-{
-public:
-  Entity * entity_;        ///< The entity the body belongs to
+class Body {
+ public:
+  Entity *entity_;         ///< The entity the body belongs to
   std::string name_;       ///< name of the body, unique within a model
-  b2Body * physics_body_;  ///< Box2D physics body
+  b2Body *physics_body_;   ///< Box2D physics body
   Color color_;            ///< color, for visualization
   YAML::Node properties_;  ///< Properties document for plugins to use
+
+  /// Vertical (Z) offset applied when visualizing this body, in meters. Lets
+  /// plugins lift a body off the ground plane for pseudo-3D visualization (e.g.
+  /// forklift forks). Defaults to 0, so existing bodies render flat as before.
+  double elevation_ = 0.0;
+  /// When > 0, the body's polygon footprints are drawn as a filled 3D prism of
+  /// this height (in meters) instead of a flat outline. Defaults to 0 (flat).
+  double extrude_height_ = 0.0;
+
+  /// Render-only offset; does not change collision, sensor height or TF.
+  double visual_z_offset_ = 0.0;
+  /// Optional RViz mesh URI; footprints still define planar physics and sensing.
+  std::string visual_mesh_;
+  struct WheelVisual {
+    double radius = 0.0;  ///< Positive radius enables the cylindrical visual.
+    double width = 0.0;
+    Vec2 center{0, 0};    ///< Axle center in the body's planar coordinates.
+    double rotation = 0.0;
+    bool initialized = false;
+    b2Vec2 last_position{0, 0};
+    double last_heading = 0.0;
+  } wheel_visual_;
 
   /**
    * @brief constructor for body, takes in all the required parameters
@@ -80,10 +100,10 @@ public:
    * @param[in] linear_damping Box2D body linear damping
    * @param[in] angular_damping Box2D body angular damping
    */
-  Body(
-    b2World * physics_world, Entity * entity, const std::string & name, const Color & color,
-    const Pose & pose, b2BodyType body_type, const YAML::Node & properties,
-    double linear_damping = 0, double angular_damping = 0);
+  Body(b2World *physics_world, Entity *entity, const std::string &name,
+       const Color &color, const Pose &pose, b2BodyType body_type,
+       const YAML::Node &properties, double linear_damping = 0,
+       double angular_damping = 0);
 
   /**
    * @brief logs the debugging information for the body
@@ -93,19 +113,19 @@ public:
   /**
    * @return entity associated with the body
    */
-  Entity * GetEntity();
+  Entity *GetEntity();
 
   /**
    * @return name of the body
    */
-  const std::string & GetName() const;
+  const std::string &GetName() const;
 
   /**
    * @brief Get the Box2D body, use this to manipulate the body in physics
    * through the Box2D methods
    * @return Pointer to Box2D physics body
    */
-  b2Body * GetPhysicsBody();
+  b2Body *GetPhysicsBody();
 
   /**
    * @brief Count the number of fixtures
@@ -116,12 +136,12 @@ public:
   /**
    * @return Color of the body
    */
-  const Color & GetColor() const;
+  const Color &GetColor() const;
 
   /**
    * @brief Set of the color of the body
    */
-  void SetColor(const Color & color);
+  void SetColor(const Color &color);
 
   /**
    * Destructor for the body
@@ -133,7 +153,7 @@ public:
    * and destructing bodies
    */
   Body(const Body &) = delete;
-  Body & operator=(const Body &) = delete;
+  Body &operator=(const Body &) = delete;
 };
-}  // namespace flatland_server
+};      // namespace flatland_server
 #endif  // FLATLAND_MODEL_BODY_H

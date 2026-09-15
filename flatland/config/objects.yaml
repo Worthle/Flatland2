@@ -1,0 +1,9 @@
+- model: pallet
+  name: pallet_1
+  pose: [-2.4, -2.0, 0.0]
+- model: box
+  name: box_1
+  pose: [1.5, -4.0, 0.0]
+- model: charger
+  name: charger_1
+  pose: [-4.0, -5.0, 0.0]

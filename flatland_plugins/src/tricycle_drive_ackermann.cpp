@@ -1,0 +1,452 @@
+// Copyright (c) 2017, Avidbots Corp.
+// Copyright (c) 2026, Levent Soysal (Worthle).
+// SPDX-License-Identifier: BSD-3-Clause
+// Full license notices: LICENSE and SOURCE_NOTICES.
+
+#include <Box2D/Box2D.h>
+#include <flatland_plugins/tricycle_drive_ackermann.h>
+
+#include <cmath>
+#include <flatland_plugins/ros2_compat.h>
+#include <flatland_server/debug_visualization.h>
+#include <flatland_server/model_plugin.h>
+#include <flatland_server/yaml_reader.h>
+#include <pluginlib/class_list_macros.hpp>
+#include <rclcpp/rclcpp.hpp>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+namespace flatland_plugins {
+
+void TricycleDriveAckermann::OnInitialize(const YAML::Node& config) {
+  YamlReader r(config);
+
+  // load all the parameters
+  string body_name = r.Get<string>("body");
+  string front_wj_name = r.Get<string>("front_wheel_joint");
+  string rear_left_wj_name = r.Get<string>("rear_left_wheel_joint");
+  string rear_right_wj_name = r.Get<string>("rear_right_wheel_joint");
+  string odom_frame_id = r.Get<string>("odom_frame_id", "odom");
+
+  string twist_topic = r.Get<string>("twist_sub", "cmd_vel");
+  string odom_topic = r.Get<string>("odom_pub", "odom");
+  string ground_truth_topic =
+      r.Get<string>("ground_truth_pub", "ground_truth/odom");
+  string ground_truth_frame_id =
+      r.Get<string>("ground_truth_frame_id", "map");
+  string pose_topic = r.Get<string>("ground_truth_pose_pub", "ground_truth/pose");
+
+  // noise are in the form of linear x, linear y, angular variances
+  vector<double> odom_twist_noise =
+      r.GetList<double>("odom_twist_noise", {0, 0, 0}, 3, 3);
+  vector<double> odom_pose_noise =
+      r.GetList<double>("odom_pose_noise", {0, 0, 0}, 3, 3);
+
+  double pub_rate =
+      r.Get<double>("pub_rate", numeric_limits<double>::infinity());
+  update_timer_.SetRate(pub_rate);
+
+  // by default the covariance diagonal is the variance of actual noise
+  // generated, non-diagonal elements are zero assuming the noises are
+  // independent, we also don't care about linear z, angular x, and angular y
+  array<double, 36> odom_pose_covar_default = {0};
+  odom_pose_covar_default[0] = odom_pose_noise[0];
+  odom_pose_covar_default[7] = odom_pose_noise[1];
+  odom_pose_covar_default[35] = odom_pose_noise[2];
+
+  array<double, 36> odom_twist_covar_default = {0};
+  odom_twist_covar_default[0] = odom_twist_noise[0];
+  odom_twist_covar_default[7] = odom_twist_noise[1];
+  odom_twist_covar_default[35] = odom_twist_noise[2];
+
+  auto odom_twist_covar =
+      r.GetArray<double, 36>("odom_twist_covariance", odom_twist_covar_default);
+  auto odom_pose_covar =
+      r.GetArray<double, 36>("odom_pose_covariance", odom_pose_covar_default);
+
+  // Default max_steer_angle=0.0 means "unbounded"
+  max_steer_angle_ = r.Get<double>("max_steer_angle", 0.0);
+
+  // Angular dynamics constraints
+  angular_dynamics_.Configure(r.SubnodeOpt("angular_dynamics", YamlReader::MAP).Node());
+
+  // Accept old configuration location for angular dynamics constraints if present
+  if (angular_dynamics_.velocity_limit_ == 0.0) angular_dynamics_.velocity_limit_ = r.Get<double>("max_angular_velocity", 0.0);
+  if (angular_dynamics_.acceleration_limit_ == 0.0) {
+    angular_dynamics_.acceleration_limit_ = r.Get<double>("max_steer_acceleration", 0.0);
+    angular_dynamics_.deceleration_limit_ = angular_dynamics_.acceleration_limit_ ;
+  }
+
+  // Linear dynamics constraints
+  linear_dynamics_.Configure(r.SubnodeOpt("linear_dynamics", YamlReader::MAP).Node());
+
+  delta_command_ = 0.0;
+  theta_f_ = 0.0;
+  d_delta_ = 0.0;
+
+  r.EnsureAccessedAllKeys();
+
+  // Get the bodies and joints from names, throw if not found
+  body_ = GetModel()->GetBody(body_name);
+  if (body_ == nullptr) {
+    throw YAMLException("Body with name " + Q(body_name) + " does not exist");
+  }
+
+  front_wj_ = GetModel()->GetJoint(front_wj_name);
+  if (front_wj_ == nullptr) {
+    throw YAMLException("Joint with name " + Q(front_wj_name) +
+                        " does not exist");
+  }
+
+  rear_left_wj_ = GetModel()->GetJoint(rear_left_wj_name);
+  if (rear_left_wj_ == nullptr) {
+    throw YAMLException("Joint with name " + Q(rear_left_wj_name) +
+                        " does not exist");
+  }
+
+  rear_right_wj_ = GetModel()->GetJoint(rear_right_wj_name);
+  if (rear_right_wj_ == nullptr) {
+    throw YAMLException("Joint with name " + Q(rear_right_wj_name) +
+                        " does not exist");
+  }
+
+  // validate the that joints fits the assumption of the robot model and
+  // calculate rear wheel separation and wheel base
+  ComputeJoints();
+
+  // publish and subscribe to topics
+  twist_sub_ =
+      nh_->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(twist_topic, 1, [this](const ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg){ TwistCallback(*msg); });
+  odom_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1);
+  ground_truth_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(ground_truth_topic, 1);
+  ground_truth_pose_pub_ = nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(pose_topic, 1);
+
+  // init the values for the messages
+  ground_truth_msg_.header.frame_id = ground_truth_frame_id;
+  ground_truth_msg_.child_frame_id =
+      flatland_plugins::resolveTf("", GetModel()->NameSpaceTF(body_->name_));
+
+  ground_truth_msg_.twist.covariance.fill(0);
+  ground_truth_msg_.pose.covariance.fill(0);
+  odom_msg_ = ground_truth_msg_;
+  odom_msg_.header.frame_id = GetModel()->NameSpaceTF(odom_frame_id);
+
+  // copy from array to boost array
+  for (unsigned int i = 0; i < 36; i++) {
+    odom_msg_.twist.covariance[i] = odom_twist_covar[i];
+    odom_msg_.pose.covariance[i] = odom_pose_covar[i];
+  }
+
+  // init the random number generators
+  random_device rd;
+  rng_ = default_random_engine(rd());
+  for (unsigned int i = 0; i < 3; i++) {
+    // variance is standard deviation squared
+    noise_gen_[i] = normal_distribution<double>(0.0, sqrt(odom_pose_noise[i]));
+  }
+
+  for (unsigned int i = 0; i < 3; i++) {
+    noise_gen_[i + 3] =
+        normal_distribution<double>(0.0, sqrt(odom_twist_noise[i]));
+  }
+
+  RCLCPP_DEBUG(rclcpp::get_logger("TricycleDriveAckermann"),
+      "Initialized with params body(%p %s) front_wj(%p %s) "
+      "rear_left_wj(%p %s) rear_right_wj(%p %s) "
+      "odom_frame_id(%s) twist_sub(%s) odom_pub(%s) "
+      "ground_truth_pub(%s) odom_pose_noise({%f,%f,%f}) "
+      "odom_twist_noise({%f,%f,%f}) pub_rate(%f)\n",
+      body_, body_->GetName().c_str(), front_wj_, front_wj_->GetName().c_str(),
+      rear_left_wj_, rear_left_wj_->GetName().c_str(), rear_right_wj_,
+      rear_right_wj_->GetName().c_str(), odom_frame_id.c_str(),
+      twist_topic.c_str(), odom_topic.c_str(), ground_truth_topic.c_str(),
+      odom_pose_noise[0], odom_pose_noise[1], odom_pose_noise[2],
+      odom_twist_noise[0], odom_twist_noise[1], odom_twist_noise[2], pub_rate);
+}
+
+void TricycleDriveAckermann::ComputeJoints() {
+  auto get_anchor = [&](Joint* joint, bool* is_inverted = nullptr) {
+
+    b2Vec2 wheel_anchor;  ///< wheel anchor point, must be (0,0)
+    b2Vec2 body_anchor;   ///< body anchor point
+    bool inv = false;
+
+    // ensure one of the body is the main body for the odometry
+    if (joint->physics_joint_->GetBodyA()->GetUserData() == body_) {
+      wheel_anchor = joint->physics_joint_->GetAnchorB();
+      body_anchor = joint->physics_joint_->GetAnchorA();
+    } else if (joint->physics_joint_->GetBodyB()->GetUserData() == body_) {
+      wheel_anchor = joint->physics_joint_->GetAnchorA();
+      body_anchor = joint->physics_joint_->GetAnchorB();
+      inv = true;
+    } else {
+      throw YAMLException("Joint " + Q(joint->GetName()) +
+                          " does not anchor on body " + Q(body_->GetName()));
+    }
+
+    // convert anchor is global coordinates to local body coordinates
+    b2Body* wheel_body = joint->physics_joint_->GetBodyA() == body_->physics_body_
+        ? joint->physics_joint_->GetBodyB() : joint->physics_joint_->GetBodyA();
+    wheel_anchor = wheel_body->GetLocalPoint(wheel_anchor);
+    body_anchor = body_->physics_body_->GetLocalPoint(body_anchor);
+
+    // ensure the joint is anchored at (0,0) of the wheel_body
+    if (fabs(wheel_anchor.x) > 1e-5 || fabs(wheel_anchor.y) > 1e-5) {
+      throw YAMLException("Joint " + Q(joint->GetName()) +
+                          " must be anchored at (0, 0) on the wheel");
+    }
+
+    if (is_inverted) {
+      *is_inverted = inv;
+    }
+
+    return body_anchor;
+  };
+
+  // joints must be of expected type
+  if (front_wj_->physics_joint_->GetType() != e_revoluteJoint) {
+    throw YAMLException("Front wheel joint must be a revolute joint");
+  }
+
+  if (rear_left_wj_->physics_joint_->GetType() != e_weldJoint) {
+    throw YAMLException("Rear left wheel joint must be a weld joint");
+  }
+
+  if (rear_right_wj_->physics_joint_->GetType() != e_weldJoint) {
+    throw YAMLException("Rear right wheel joint must be a weld joint");
+  }
+
+  // enable limits for the front joint
+  b2RevoluteJoint* j =
+      dynamic_cast<b2RevoluteJoint*>(front_wj_->physics_joint_);
+  j->EnableLimit(true);
+
+  // positive joint angle goes counter clockwise from the perspective of BodyA,
+  // if body_ is not BodyA, we need flip the steering angle for visualization
+  b2Vec2 front_anchor = get_anchor(front_wj_, &invert_steering_angle_);
+  b2Vec2 rear_left_anchor = get_anchor(rear_left_wj_);
+  b2Vec2 rear_right_anchor = get_anchor(rear_right_wj_);
+
+
+  // calculate the wheelbase and axeltrack. We also need to verify that
+  // the rear_center is at the perpendicular intersection between the rear axel
+  // and the front wheel anchor
+  rear_center_ = 0.5 * (rear_left_anchor + rear_right_anchor);
+
+  // find the perpendicular intersection between line segment given by (x1, y1)
+  // and (x2, y2) and a point (x3, y3).
+  double x1 = rear_left_anchor.x, y1 = rear_left_anchor.y,
+         x2 = rear_right_anchor.x, y2 = rear_right_anchor.y,
+         x3 = front_anchor.x, y3 = front_anchor.y;
+
+  double k = ((y2 - y1) * (x3 - x1) - (x2 - x1) * (y3 - y1)) /
+             ((y2 - y1) * (y2 - y1) + (x2 - x1) * (x2 - x1));
+  double x4 = x3 - k * (y2 - y1);
+  double y4 = y3 + k * (x2 - x1);
+
+  // check (x4, y4) equals to rear_center_
+  if (fabs(x4 - rear_center_.x) > 1e-5 || fabs(y4 - rear_center_.y) > 1e-5) {
+    throw YAMLException(
+        "The mid point between the rear wheel anchors on the body must equal "
+        "the perpendicular intersection between the rear axel (line segment "
+        "between rear anchors) and the front wheel anchor");
+  }
+
+  // track is the separation between the rear two wheels, which is simply the
+  // distance between the rear two wheels
+  axel_track_ = sqrt((x1 - x2) * (x1 - x2) + (y1 - y2) * (y1 - y2));
+
+  // wheel base is the perpendicular distance between the rear axel and the
+  // front wheel
+  wheelbase_ = sqrt((x4 - x3) * (x4 - x3) + (y4 - y3) * (y4 - y3));
+}
+
+void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
+  bool publish = update_timer_.CheckUpdate(timekeeper);
+
+  b2Body* b2body = body_->physics_body_;
+
+  b2Vec2 position = b2body->GetPosition();
+  float angle = b2body->GetAngle();
+  if(!initialized_)
+  {
+    initial_position_ = position;
+    initial_angle_ = angle;
+    initialized_ = true;
+  }
+
+  if (publish) {
+    // Pose-derived twist includes contacts and joint position corrections
+    // that may differ from the instantaneous Box2D velocity state.
+    b2Vec2 linear_vel_local =
+        b2body->GetLinearVelocityFromLocalPoint(b2Vec2(0, 0));
+    double angular_vel = b2body->GetAngularVelocity();
+    const double now = timekeeper.GetSimTime().seconds();
+    if (have_last_odom_ && now > last_odom_time_) {
+      const double dt = now - last_odom_time_;
+      double dtheta = angle - last_odom_angle_;
+      while (dtheta > M_PI) dtheta -= 2.0 * M_PI;
+      while (dtheta < -M_PI) dtheta += 2.0 * M_PI;
+      angular_vel = dtheta / dt;
+      const b2Vec2 dp = position - last_odom_position_;
+      linear_vel_local.x = (cos(angle) * dp.x + sin(angle) * dp.y) / dt;
+      linear_vel_local.y = (-sin(angle) * dp.x + cos(angle) * dp.y) / dt;
+    }
+    last_odom_position_ = position;
+    last_odom_angle_ = angle;
+    last_odom_time_ = now;
+    have_last_odom_ = true;
+
+    ground_truth_msg_.header.stamp = timekeeper.GetSimTime();
+    ground_truth_msg_.pose.pose.position.x = position.x - initial_position_.x;
+    ground_truth_msg_.pose.pose.position.y = position.y - initial_position_.y;
+    ground_truth_msg_.pose.pose.position.z = 0;
+    ground_truth_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle - initial_angle_);
+    ground_truth_msg_.twist.twist.linear.x = linear_vel_local.x;
+    ground_truth_msg_.twist.twist.linear.y = linear_vel_local.y;
+    ground_truth_msg_.twist.twist.linear.z = 0;
+    ground_truth_msg_.twist.twist.angular.x = 0;
+    ground_truth_msg_.twist.twist.angular.y = 0;
+    ground_truth_msg_.twist.twist.angular.z = angular_vel;
+    // Create pose msgs
+    pose_msg_.header.stamp = timekeeper.GetSimTime();
+    pose_msg_.header.frame_id = ground_truth_msg_.header.frame_id;
+    pose_msg_.pose.pose.position.x = position.x;
+    pose_msg_.pose.pose.position.y = position.y;
+    pose_msg_.pose.pose.position.z = 0;
+    pose_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    // add the noise to odom messages
+    odom_msg_.header.stamp = timekeeper.GetSimTime();
+    odom_msg_.pose.pose = ground_truth_msg_.pose.pose;
+    // Odometry starts at the spawn pose and uses its initial heading.
+    const double dx = position.x - initial_position_.x;
+    const double dy = position.y - initial_position_.y;
+    odom_msg_.pose.pose.position.x = cos(initial_angle_) * dx + sin(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.y = -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
+    ground_truth_msg_.pose.pose.position.x = position.x;
+    ground_truth_msg_.pose.pose.position.y = position.y;
+    ground_truth_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+
+    odom_msg_.twist.twist = ground_truth_msg_.twist.twist;
+    odom_msg_.pose.pose.position.x += noise_gen_[0](rng_);
+    odom_msg_.pose.pose.position.y += noise_gen_[1](rng_);
+    odom_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw((angle - initial_angle_) + noise_gen_[2](rng_));
+    odom_msg_.twist.twist.linear.x += noise_gen_[3](rng_);
+    odom_msg_.twist.twist.linear.y += noise_gen_[4](rng_);
+    odom_msg_.twist.twist.angular.z += noise_gen_[5](rng_);
+
+    ground_truth_pub_->publish(ground_truth_msg_);
+    odom_pub_->publish(odom_msg_);
+    ground_truth_pose_pub_->publish(pose_msg_);
+  }
+
+  // 2. Update the tricycle physics based on the twist command
+  //    This is a highly simplified kinematic approximation of the response
+  //    of the steering and drive mechanisms.
+
+  // Equations of motion for steering (kinematics only)
+  // Let δ (delta)  = measured steering angle
+  //     δ_c        = commanded steering angle
+  // Then the kinematic discrete-time equations are (1st-order approximation):
+  //   (1)  δ[t+1] = δ[t] + dδ[t+1] * dt          new steering angle
+  //   (2)  dδ[t+1] = dδ[t] + d2δ[t+1] * dt       new steering velocity
+  //   (3)  d2δ[t+1] = (dδ_c[t+1] - dδ[t]) / dt   new steering acceleration
+  //   (4)  dδ_c[t+1] = (δ_c[t+1] - δ[t]) / dt    new steering velocity command
+  //          when it requires > 1 dt to reach δ[t+1]
+  //        0.0
+  //          otherwise
+  // subject to:
+  //   |δ[t]| <= max_steer_angle_
+  //   |dδ[t]| <= angular_dynamics_.velocity_limit_
+  //   |d2δ[t]| <= angular_dynamics_.acceleration_limit_ 
+
+  // twist message contains the speed and angle of the front wheel
+  delta_command_ = twist_msg_.angular.z;  // target steering angle
+  double theta = angle;                   // angle of robot in map frame
+  double dt = timekeeper.GetStepSize();
+
+  // In the simulation, the equations of motion have to be computed backwards
+  // (4) Update the new commanded steering velocity
+  
+  //     Note: Set target steer velocity = 0 rad/s to avoid overshooting, when
+  //           it is possible to reach the commanded steering angle in 1 step
+  double d_delta_command = 0.0;
+  double delta_max_one_step = d_delta_ * d_delta_ / 2 / angular_dynamics_.acceleration_limit_;
+  if (angular_dynamics_.acceleration_limit_ == 0.0) {
+    delta_max_one_step = fabs(delta_command_ - theta_f_);
+  }
+
+  if (fabs(delta_command_ - theta_f_) >= delta_max_one_step) {
+    d_delta_command = (delta_command_ - theta_f_) / dt;
+  }
+
+  // Apply angular dynamics constraints
+  d_delta_ = angular_dynamics_.Limit(d_delta_, d_delta_command, dt);
+
+  // (1) Update the new steering angle
+  theta_f_ += d_delta_ * dt;
+  if (max_steer_angle_ != 0.0) {
+    theta_f_ = DynamicsLimits::Saturate(theta_f_, -max_steer_angle_, max_steer_angle_);
+  }
+
+  RCLCPP_DEBUG_THROTTLE(rclcpp::get_logger("flatland"), *nh_->get_clock(), (0.5)*1000,
+                     "Using new tricycle steering, "
+                     "d_delta = %.4f, twist.x = %.4f, twist.delta = %.4f",
+                     d_delta_, twist_msg_.linear.x,
+                     twist_msg_.angular.z);
+
+  // change angle of the front wheel for visualization
+
+  b2RevoluteJoint* j =
+      dynamic_cast<b2RevoluteJoint*>(front_wj_->physics_joint_);
+  j->EnableLimit(true);
+  if (invert_steering_angle_) {
+    j->SetLimits(-theta_f_, -theta_f_);
+  } else {
+    j->SetLimits(theta_f_, theta_f_);
+  }
+
+  // calculate the desired velocity using the bicycle model in the world frame
+  // looking at the rear center, formulas obtained from avidbots robot systems
+  // confluence page
+
+  // apply linear velocity and acceleration constraints
+  v_f_ = linear_dynamics_.Limit(v_f_, twist_msg_.linear.x, dt);
+
+  double v_x = v_f_ * cos(theta_f_) * cos(theta);  // x velocity in world
+  double v_y = v_f_ * cos(theta_f_) * sin(theta);  // y velocity in world
+  double w = v_f_ * sin(theta_f_) / wheelbase_;    // angular velocity
+
+  // Now we would like the rear center to move at v_x, v_y, and w, since Box2D
+  // applies velocities at center of mass, we must use rigid body kinematics
+  // to transform the velocities
+  b2Vec2 linear_vel(v_x, v_y);
+
+  // V_cm = V_rc + W x r_cm/rc
+  // velocity at center of mass equals to the velocity at the rear center plus,
+  // angular velocity cross product the displacement from the rear center to the
+  // center of mass
+
+  // r is the vector from rear center to CM in world frame
+  b2Vec2 r = b2body->GetWorldCenter() - b2body->GetWorldPoint(rear_center_);
+  b2Vec2 linear_vel_cm = linear_vel + w * b2Vec2(-r.y, r.x);
+
+  b2body->SetLinearVelocity(linear_vel_cm);
+
+  // angular velocity is the same at any point in body
+  b2body->SetAngularVelocity(w);
+}
+
+void TricycleDriveAckermann::TwistCallback(const ackermann_msgs::msg::AckermannDriveStamped& msg) {
+  // As descrivbed in https://flatland-simulator.readthedocs.io/en/latest/included_plugins/tricycle_drive.html
+  twist_msg_.linear.x = msg.drive.speed;
+  twist_msg_.angular.z = msg.drive.steering_angle;
+}
+
+
+}
+
+PLUGINLIB_EXPORT_CLASS(flatland_plugins::TricycleDriveAckermann,
+                       flatland_server::ModelPlugin)

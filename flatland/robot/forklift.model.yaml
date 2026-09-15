@@ -1,0 +1,286 @@
+# Generic rear-facing forks with a 3 m mast; positive drive points away from the forks.
+bodies:
+- name: base_link
+  visual_z_offset: 0.2
+  type: dynamic
+  pose: [0, 0, 0]
+  color: [0.95, 0.55, 0.12, 1.0]
+  extrude: 0.85
+  footprints:
+  - type: polygon
+    points:
+    - [-0.16, -0.52]
+    - [1.35, -0.52]
+    - [1.35, 0.52]
+    - [-0.16, 0.52]
+    density: 550
+    layers: [all]
+    sensor: false
+- name: front_wheel
+  wheel_visual: {radius: 0.140, width: 0.100, center: [0, 0]}
+  type: dynamic
+  pose: [1.1, 0, 0]
+  color: &id001 [0.08, 0.1, 0.12, 1.0]
+  extrude: 0.18
+  footprints:
+  - type: polygon
+    points:
+    - [-0.14, -0.05]
+    - [0.14, -0.05]
+    - [0.14, 0.05]
+    - [-0.14, 0.05]
+    density: 2
+    layers: [all]
+    sensor: true
+- name: rear_left_wheel
+  wheel_visual: {radius: 0.140, width: 0.100, center: [0, 0]}
+  type: dynamic
+  pose: [0, 0.43, 0]
+  color: *id001
+  extrude: 0.18
+  footprints:
+  - type: polygon
+    points:
+    - [-0.14, -0.05]
+    - [0.14, -0.05]
+    - [0.14, 0.05]
+    - [-0.14, 0.05]
+    density: 2
+    layers: [all]
+    sensor: true
+- name: rear_right_wheel
+  wheel_visual: {radius: 0.140, width: 0.100, center: [0, 0]}
+  type: dynamic
+  pose: [0, -0.43, 0]
+  color: *id001
+  extrude: 0.18
+  footprints:
+  - type: polygon
+    points:
+    - [-0.14, -0.05]
+    - [0.14, -0.05]
+    - [0.14, 0.05]
+    - [-0.14, 0.05]
+    density: 2
+    layers: [all]
+    sensor: true
+- name: left_fork
+  type: dynamic
+  pose: [-0.16, 0.32, 0]
+  color: *id001
+  extrude: 0.08
+  footprints:
+  - type: polygon
+    points:
+    - [-1.2, -0.055]
+    - [0, -0.055]
+    - [0, 0.055]
+    - [-1.2, 0.055]
+    density: 100
+    layers: [all]
+    sensor: false
+- name: right_fork
+  type: dynamic
+  pose: [-0.16, -0.32, 0]
+  color: *id001
+  extrude: 0.08
+  footprints:
+  - type: polygon
+    points:
+    - [-1.2, -0.055]
+    - [0, -0.055]
+    - [0, 0.055]
+    - [-1.2, 0.055]
+    density: 100
+    layers: [all]
+    sensor: false
+- name: left_mast
+  type: dynamic
+  pose: [-0.16, 0.4, 0]
+  color: *id001
+  extrude: 3.15
+  footprints:
+  - type: polygon
+    points:
+    - [-0.06, -0.07]
+    - [0.06, -0.07]
+    - [0.06, 0.07]
+    - [-0.06, 0.07]
+    density: 1
+    layers: [all]
+    sensor: true
+- name: right_mast
+  type: dynamic
+  pose: [-0.16, -0.4, 0]
+  color: *id001
+  extrude: 3.15
+  footprints:
+  - type: polygon
+    points:
+    - [-0.06, -0.07]
+    - [0.06, -0.07]
+    - [0.06, 0.07]
+    - [-0.06, 0.07]
+    density: 1
+    layers: [all]
+    sensor: true
+joints:
+- type: revolute
+  name: front_wheel_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: front_wheel
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [1.1, 0]
+- type: weld
+  name: rear_left_wheel_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: rear_left_wheel
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [0, 0.43]
+- type: weld
+  name: rear_right_wheel_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: rear_right_wheel
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [0, -0.43]
+- type: weld
+  name: left_fork_mount
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: left_fork
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [-0.16, 0.32]
+- type: weld
+  name: right_fork_mount
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: right_fork
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [-0.16, -0.32]
+- type: weld
+  name: left_mast_mount
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: left_mast
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [-0.16, 0.4]
+- type: weld
+  name: right_mast_mount
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: right_mast
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [-0.16, -0.4]
+plugins:
+- type: TricycleDriveAckermann
+  name: drive
+  body: base_link
+  odom_frame_id: odom
+  pub_rate: 30
+  odom_pub: odom
+  ground_truth_pub: ground_truth/odom
+  ground_truth_pose_pub: ground_truth/pose
+  ground_truth_frame_id: map
+  odom_pose_noise: [0, 0, 0]
+  odom_twist_noise: [0, 0, 0]
+  twist_sub: ackermann_cmd
+  front_wheel_joint: front_wheel_joint
+  rear_left_wheel_joint: rear_left_wheel_joint
+  rear_right_wheel_joint: rear_right_wheel_joint
+  max_steer_angle: 1.2
+  linear_dynamics: {velocity_limit: 1.2, acceleration_limit: 1.0}
+  angular_dynamics: {velocity_limit: 1.5, acceleration_limit: 3.0}
+- type: Forklift
+  name: forklift
+  bodies: [left_fork, right_fork]
+  lift_height: 3.0
+  fork_thickness: 0.08
+  lift_speed: 0.5
+  service: fork/lift
+  state_topic: fork/state
+  height_topic: fork/height
+  update_rate: 20
+- type: LinkAttacher
+  name: attacher
+  body: base_link
+  model_prefixes: [pallet, cage]
+  capture_point: [-0.8, 0]
+  capture_range: 0.75
+  attach_service: fork/attach
+  detach_service: fork/detach
+  state_topic: fork/attached_model
+  elevation_source_body: left_fork
+  drop_speed: 0.5
+- {type: ForkController, name: fork_controller, auto_attach: false, loaded_weight: 200.0}
+- type: Laser
+  name: laser
+  body: base_link
+  frame: laser
+  topic: scan
+  origin: [0, 0, 0]
+  range: 30
+  angle: {min: -3.141592653589793, max: 3.141592653589793, increment: 0.008726646259971648}
+  noise_std_dev: 0.005
+  update_rate: 15
+  layers: [all]
+  ignore_bodies: [base_link, front_wheel, rear_left_wheel, rear_right_wheel, left_fork, right_fork, left_mast, right_mast]
+  max_body_elevation: 0.3
+  broadcast_tf: true
+- type: Imu
+  name: imu
+  body: base_link
+  imu_frame_id: imu_link
+  imu_pub: imu/data
+  ground_truth_pub: ground_truth/imu
+  pub_rate: 30
+  broadcast_tf: true
+  orientation_noise: [0.0001, 0.0001, 0.0001]
+  angular_velocity_noise: [0.001, 0.001, 0.001]
+  linear_acceleration_noise: [0.001, 0.001, 0.001]
+- type: MockLidar3D
+  name: lidar3d
+  body: base_link
+  frame: lidar3d
+  topic: lidar_points
+  origin: [0, 0, 0]
+  origin_z: 1.0
+  pcd_path: package://flatland/maps/warehouse/warehouse.pcd
+  num_rays: 360
+  elevations_deg: [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
+  elev_tolerance_deg: 1.5
+  update_rate: 20
+  range_noise_std_dev: 0.01
+  layers: [all]
+- type: MockDetection
+  name: mock_camera
+  body: base_link
+  frame: camera_link
+  topic: detections
+  origin: [0, 0, 3.141592653589793]
+  model_prefixes: [pallet, box, cage, charger]
+  min_range: 0.15
+  max_range: 6.0
+  fov: 1.57
+  noise_std_dev: [0.01, 0.01, 0.02]
+  dropout_probability: 0.02
+  layers: [all]
+  broadcast_target_tf: false
+  update_rate: 10
+- {type: ModelTfPublisher, name: body_tf, reference: base_link, publish_tf_world: true, update_rate: 30}

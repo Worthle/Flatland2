@@ -51,50 +51,38 @@
 #include <flatland_server/flatland_plugin.h>
 #include <flatland_server/model.h>
 #include <flatland_server/timekeeper.h>
+#include <rclcpp/rclcpp.hpp>
 #include <yaml-cpp/yaml.h>
 
-#include <rclcpp/rclcpp.hpp>
-
-namespace flatland_server
-{
+namespace flatland_server {
 
 /**
  * This class defines a model plugin. All implemented model plugins will inherit
  * from it A model plugin is a plugin that is directly tied to a single model in
  * the world
  */
-class ModelPlugin : public FlatlandPlugin
-{
-private:
-  Model * model_;  ///< model this plugin is tied to
+class ModelPlugin : public FlatlandPlugin {
+ private:
+  Model *model_;  ///< model this plugin is tied to
 
-public:
-  rclcpp::Node::SharedPtr node_;  ///< ROS node
+ public:
+  rclcpp::Node::SharedPtr nh_;  ///< ROS node handle (model namespace sub-node)
 
   /**
    * @brief Get model
    */
-  Model * GetModel();
-
-  /**
-   * @brief The method for the particular model plugin to override and provide
-   * its own initialization
-   * @param[in] config The plugin YAML node
-   */
-  virtual void OnInitialize(const YAML::Node & config) = 0;
+  Model *GetModel();
 
   /**
    * @brief The method to initialize the ModelPlugin, required since Pluginlib
    * require the class to have a default constructor
-   * @param[in] node, the rclcpp node pointer
    * @param[in] type Type of the plugin
    * @param[in] name Name of the plugin
    * @param[in] model The model associated with this model plugin
    * @param[in] config The plugin YAML node
    */
-  void Initialize(
-    rclcpp::Node::SharedPtr node, const std::string & type, const std::string & name, Model * model,
-    const YAML::Node & config);
+  void Initialize(const std::string &type, const std::string &name,
+                  Model *model, const YAML::Node &config);
 
   /**
    * @brief Helper function check if this model is part of the contact, and
@@ -109,22 +97,21 @@ public:
    * is returned, none of the entity, this_fixture, other_fixture pointers will
    * be populated
    */
-  bool FilterContact(
-    b2Contact * contact, Entity *& entity, b2Fixture *& this_fixture, b2Fixture *& other_fixture);
+  bool FilterContact(b2Contact *contact, Entity *&entity,
+                     b2Fixture *&this_fixture, b2Fixture *&other_fixture);
 
   /**
    * @brief Helper function check if this model is part of the contact
    * @param[in] contact Box2D contact
    * @return True or false depending on if this model is involved
    */
-  bool FilterContact(b2Contact * contact);
+  bool FilterContact(b2Contact *contact);
 
-protected:
+ protected:
   /**
    * @brief Model plugin default constructor
    */
   ModelPlugin() = default;
 };
-}  // namespace flatland_server
-
+};      // namespace flatland_server
 #endif  // FLATLAND_SERVER_MODEL_PLUGIN_H

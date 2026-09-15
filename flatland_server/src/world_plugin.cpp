@@ -45,23 +45,21 @@
  */
 
 #include <Box2D/Box2D.h>
+#include <rclcpp/rclcpp.hpp>
+
 #include <flatland_server/world.h>
 #include <flatland_server/world_plugin.h>
-
-#include <rclcpp/rclcpp.hpp>
 #include <string>
 
-namespace flatland_server
-{
-void WorldPlugin::Initialize(
-  rclcpp::Node::SharedPtr node, World * world, std::string name, std::string type,
-  YAML::Node & plugin_reader, YamlReader & world_config)
-{
+namespace flatland_server {
+void WorldPlugin::Initialize(World *world, std::string name, std::string type,
+                             YAML::Node &plugin_reader,
+                             YamlReader &world_config) {
   world_ = world;
   name_ = name;
   type_ = type;
+  world_config_ = world_config;
   plugin_type_ = PluginType::World;
-  node_ = node;
-  OnInitialize(plugin_reader, world_config);
+  OnInitialize(plugin_reader);
 }
-}  // namespace flatland_server
+}

@@ -1,0 +1,71 @@
+bodies:
+- name: cage
+  type: dynamic
+  pose:
+  - 0
+  - 0
+  - 0
+  color:
+  - 0.3
+  - 0.36
+  - 0.38
+  - 1
+  extrude: 0.97
+  visual_mesh: package://flatland/objects/meshes/cage.dae
+  footprints:
+  - type: polygon
+    points:
+    - - -0.4175
+      - -0.62
+    - - -0.3425
+      - -0.62
+    - - -0.3425
+      - -0.545
+    - - -0.4175
+      - -0.545
+    density: 3111.111111
+    friction: 0.5
+    layers:
+    - all
+  - type: polygon
+    points:
+    - - -0.4175
+      - 0.545
+    - - -0.3425
+      - 0.545
+    - - -0.3425
+      - 0.62
+    - - -0.4175
+      - 0.62
+    density: 3111.111111
+    friction: 0.5
+    layers:
+    - all
+  - type: polygon
+    points:
+    - - 0.3425
+      - -0.62
+    - - 0.4175
+      - -0.62
+    - - 0.4175
+      - -0.545
+    - - 0.3425
+      - -0.545
+    density: 3111.111111
+    friction: 0.5
+    layers:
+    - all
+  - type: polygon
+    points:
+    - - 0.3425
+      - 0.545
+    - - 0.4175
+      - 0.545
+    - - 0.4175
+      - 0.62
+    - - 0.3425
+      - 0.62
+    density: 3111.111111
+    friction: 0.5
+    layers:
+    - all

@@ -51,51 +51,45 @@
 #include <flatland_server/yaml_reader.h>
 #include <yaml-cpp/yaml.h>
 
-#include <rclcpp/rclcpp.hpp>
-
-namespace flatland_server
-{
+namespace flatland_server {
 
 /**
  * This class defines a entity in the simulation world. It provides a class
  * for high level physical things in the world to inherit from (layers and
  * models)
  */
-class Entity
-{
-public:
+class Entity {
+ public:
   /// Defines the type of entity
   enum EntityType { LAYER, MODEL };
-  std::shared_ptr<rclcpp::Node> node_;
 
-  b2World * physics_world_;  ///< Box2D physics world
-  std::string name_;         ///< name of the entity
+  b2World *physics_world_;  ///< Box2D physics world
+  std::string name_;        ///< name of the entity
 
   /**
    * @brief Constructor for the entity
-   * @param[in] rclcpp::Node shared pointer to the current ROS node
    * @param[in] physics_world Box2D physics_world
    * @param[in] name name of the entity
    */
-  Entity(std::shared_ptr<rclcpp::Node> node, b2World * physics_world, const std::string & name);
+  Entity(b2World *physics_world, const std::string &name);
   virtual ~Entity() = default;
 
   /**
    * @return name of the entity
    */
-  const std::string & GetName() const;
+  const std::string &GetName() const;
 
   /**
    * @brief Get Box2D physics world
    * @return Pointer to Box2D physics world, use this to call Box2D world
    * methods
    */
-  b2World * GetPhysicsWorld();
+  b2World *GetPhysicsWorld();
 
   /// This class should be non-copyable. This will cause the destructor to be
   /// called twice for a given b2Body
   Entity(const Entity &) = delete;
-  Entity & operator=(const Entity &) = delete;
+  Entity &operator=(const Entity &) = delete;
 
   /**
    * @brief Get the type of entity, subclasses must override
@@ -113,5 +107,5 @@ public:
    */
   virtual void DebugOutput() const = 0;
 };
-}  // namespace flatland_server
+};      // namespace flatland_server
 #endif  // FLATLAND_SERVER_ENTITY_H

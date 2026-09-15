@@ -1,0 +1,240 @@
+Flatland 2 plugin source notices
+
+Original additions below are credited to Levent Soysal (Worthle).
+Files retaining upstream code keep the upstream notice as well as credit for
+Flatland 2 changes. Unmodified upstream files retain their original notice.
+
+Upstream comparison: Avidbots Flatland at
+https://github.com/avidbots/flatland/tree/6601c6560190372f304a45f3a0f758ea9ca8ea5b
+
+Original Flatland 2 additions
+
+Applies to:
+  include/flatland_plugins/asset_path.h
+  include/flatland_plugins/discrete_oe_model.h
+  include/flatland_plugins/fork_controller.h
+  include/flatland_plugins/forklift.h
+  include/flatland_plugins/link_attacher.h
+  include/flatland_plugins/narx_model.h
+  include/flatland_plugins/pcd_sampler.h
+  include/flatland_plugins/ros2_compat.h
+  include/flatland_plugins/terrain_modifier.h
+  src/fork_controller.cpp
+  src/forklift.cpp
+  src/link_attacher.cpp
+  src/narx_model.cpp
+  src/narx_sim_tool.cpp
+  src/terrain_modifier.cpp
+
+Copyright (c) 2026, Levent Soysal (Worthle).
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions are met:
+
+* Redistributions of source code must retain the above copyright notice, this
+  list of conditions and the following disclaimer.
+
+* Redistributions in binary form must reproduce the above copyright notice,
+  this list of conditions and the following disclaimer in the documentation
+  and/or other materials provided with the distribution.
+
+* Neither the name of the copyright holder nor the names of its
+  contributors may be used to endorse or promote products derived from
+  this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+Flatland 2 changes to files retaining upstream code
+
+Copyright (c) 2026, Levent Soysal (Worthle), for modifications under BSD-3-Clause.
+Applies to:
+  include/flatland_plugins/bool_sensor.h
+  include/flatland_plugins/bumper.h
+  include/flatland_plugins/diff_drive.h
+  include/flatland_plugins/diff_drive_caster.h
+  include/flatland_plugins/imu.h
+  include/flatland_plugins/laser.h
+  include/flatland_plugins/mock_detection.h
+  include/flatland_plugins/mock_lidar3d.h
+  include/flatland_plugins/model_tf_publisher.h
+  include/flatland_plugins/omni_drive.h
+  include/flatland_plugins/system_id_drive.h
+  include/flatland_plugins/tricycle_drive.h
+  include/flatland_plugins/tricycle_drive_ackermann.h
+  include/flatland_plugins/tween.h
+  include/flatland_plugins/update_timer.h
+  include/flatland_plugins/world_modifier.h
+  include/flatland_plugins/world_random_wall.h
+  src/bool_sensor.cpp
+  src/bumper.cpp
+  src/diff_drive.cpp
+  src/diff_drive_caster.cpp
+  src/imu.cpp
+  src/laser.cpp
+  src/mock_detection.cpp
+  src/mock_lidar3d.cpp
+  src/model_tf_publisher.cpp
+  src/omni_drive.cpp
+  src/system_id_drive.cpp
+  src/tricycle_drive.cpp
+  src/tricycle_drive_ackermann.cpp
+  src/tween.cpp
+  src/update_timer.cpp
+  src/world_modifier.cpp
+  src/world_random_wall.cpp
+
+Upstream BSD notices
+
+Applies to:
+  include/flatland_plugins/bool_sensor.h
+  include/flatland_plugins/bumper.h
+  include/flatland_plugins/diff_drive.h
+  include/flatland_plugins/diff_drive_caster.h
+  include/flatland_plugins/imu.h
+  include/flatland_plugins/laser.h
+  include/flatland_plugins/mock_detection.h
+  include/flatland_plugins/mock_lidar3d.h
+  include/flatland_plugins/model_tf_publisher.h
+  include/flatland_plugins/omni_drive.h
+  include/flatland_plugins/system_id_drive.h
+  include/flatland_plugins/tricycle_drive.h
+  include/flatland_plugins/tricycle_drive_ackermann.h
+  include/flatland_plugins/tween.h
+  include/flatland_plugins/update_timer.h
+  include/flatland_plugins/world_modifier.h
+  include/flatland_plugins/world_random_wall.h
+  src/bool_sensor.cpp
+  src/bumper.cpp
+  src/diff_drive.cpp
+  src/diff_drive_caster.cpp
+  src/imu.cpp
+  src/laser.cpp
+  src/mock_detection.cpp
+  src/mock_lidar3d.cpp
+  src/model_tf_publisher.cpp
+  src/omni_drive.cpp
+  src/system_id_drive.cpp
+  src/tricycle_drive.cpp
+  src/tricycle_drive_ackermann.cpp
+  src/tween.cpp
+  src/update_timer.cpp
+  src/world_modifier.cpp
+  src/world_random_wall.cpp
+
+Software License Agreement (BSD License)
+
+ Copyright (c) 2017, Avidbots Corp.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+  * Neither the name of the Avidbots Corp. nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+Applies to:
+  include/flatland_plugins/dynamics_limits.h
+  src/dynamics_limits.cpp
+
+Software License Agreement (BSD License)
+
+ Copyright (c) 2021, Avidbots Corp.
+ All rights reserved.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions
+ are met:
+
+  * Redistributions of source code must retain the above copyright
+    notice, this list of conditions and the following disclaimer.
+  * Redistributions in binary form must reproduce the above
+     copyright notice, this list of conditions and the following
+    disclaimer in the documentation and/or other materials provided
+    with the distribution.
+  * Neither the name of the Avidbots Corp. nor the names of its
+    contributors may be used to endorse or promote products derived
+    from this software without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+ "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+ LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+ FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+ INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+ BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+ LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+ ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ POSSIBILITY OF SUCH DAMAGE.
+
+Source authors credited in the original file banners:
+
+Joseph Duchesne
+  src/bool_sensor.cpp
+  src/dynamics_limits.cpp
+  src/tween.cpp
+  include/flatland_plugins/dynamics_limits.h
+  include/flatland_plugins/tween.h
+
+Chunshang Li
+  src/bumper.cpp
+  src/laser.cpp
+  src/model_tf_publisher.cpp
+  src/update_timer.cpp
+  include/flatland_plugins/bool_sensor.h
+  include/flatland_plugins/bumper.h
+  include/flatland_plugins/laser.h
+  include/flatland_plugins/model_tf_publisher.h
+  include/flatland_plugins/update_timer.h
+
+Mike Brousseau
+  src/diff_drive.cpp
+  src/imu.cpp
+  include/flatland_plugins/diff_drive.h
+  include/flatland_plugins/imu.h
+  include/flatland_plugins/tricycle_drive.h
+  include/flatland_plugins/tricycle_drive_ackermann.h
+
+Mike Brousseau, Chunshang Li
+  src/tricycle_drive.cpp
+  src/tricycle_drive_ackermann.cpp
+
+Arthur Ren
+  src/world_modifier.cpp
+
+Yi Ren
+  src/world_random_wall.cpp
+  include/flatland_plugins/world_modifier.h
+  include/flatland_plugins/world_random_wall.h

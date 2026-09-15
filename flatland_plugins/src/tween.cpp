@@ -1,101 +1,58 @@
-/*
- *  ______                   __  __              __
- * /\  _  \           __    /\ \/\ \            /\ \__
- * \ \ \L\ \  __  __ /\_\   \_\ \ \ \____    ___\ \ ,_\   ____
- *  \ \  __ \/\ \/\ \\/\ \  /'_` \ \ '__`\  / __`\ \ \/  /',__\
- *   \ \ \/\ \ \ \_/ |\ \ \/\ \L\ \ \ \L\ \/\ \L\ \ \ \_/\__, `\
- *    \ \_\ \_\ \___/  \ \_\ \___,_\ \_,__/\ \____/\ \__\/\____/
- *     \/_/\/_/\/__/    \/_/\/__,_ /\/___/  \/___/  \/__/\/___/
- * @copyright Copyright 2017 Avidbots Corp.
- * @name	Tween.cpp
- * @brief   Tween plugin
- * @author  Joseph Duchesne
- *
- * Software License Agreement (BSD License)
- *
- *  Copyright (c) 2017, Avidbots Corp.
- *  All rights reserved.
- *
- *  Redistribution and use in source and binary forms, with or without
- *  modification, are permitted provided that the following conditions
- *  are met:
- *
- *   * Redistributions of source code must retain the above copyright
- *     notice, this list of conditions and the following disclaimer.
- *   * Redistributions in binary form must reproduce the above
- *      copyright notice, this list of conditions and the following
- *     disclaimer in the documentation and/or other materials provided
- *     with the distribution.
- *   * Neither the name of the Avidbots Corp. nor the names of its
- *     contributors may be used to endorse or promote products derived
- *     from this software without specific prior written permission.
- *
- *  THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- *  "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- *  LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
- *  FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- *  COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
- *  INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
- *  BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
- *  LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
- *  CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
- *  LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
- *  ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
- *  POSSIBILITY OF SUCH DAMAGE.
- */
+// Copyright (c) 2017, Avidbots Corp.
+// Copyright (c) 2026, Levent Soysal (Worthle).
+// SPDX-License-Identifier: BSD-3-Clause
+// Full license notices: LICENSE and SOURCE_NOTICES.
 
 #include <Box2D/Box2D.h>
 #include <flatland_plugins/tween.h>
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/model_plugin.h>
-
 #include <pluginlib/class_list_macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-//#include <tf/tf.h>
+#include <tf2/utils.h>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
-namespace flatland_plugins
-{
+namespace flatland_plugins {
 
 std::map<std::string, Tween::ModeType_> Tween::mode_strings_ = {
-  {"yoyo", Tween::ModeType_::YOYO},
-  {"loop", Tween::ModeType_::LOOP},
-  {"once", Tween::ModeType_::ONCE},
-  {"trigger", Tween::ModeType_::TRIGGER}};
+    {"yoyo", Tween::ModeType_::YOYO},
+    {"loop", Tween::ModeType_::LOOP},
+    {"once", Tween::ModeType_::ONCE},
+    {"trigger", Tween::ModeType_::TRIGGER}};
 
 std::map<std::string, Tween::EasingType_> Tween::easing_strings_ = {
-  {"linear", Tween::EasingType_::linear},
-  {"quadraticIn", Tween::EasingType_::quadraticIn},
-  {"quadraticOut", Tween::EasingType_::quadraticOut},
-  {"quadraticInOut", Tween::EasingType_::quadraticInOut},
-  {"cubicIn", Tween::EasingType_::cubicIn},
-  {"cubicOut", Tween::EasingType_::cubicOut},
-  {"cubicInOut", Tween::EasingType_::cubicInOut},
-  {"quarticIn", Tween::EasingType_::quarticIn},
-  {"quarticOut", Tween::EasingType_::quarticOut},
-  {"quarticInOut", Tween::EasingType_::quarticInOut},
-  {"quinticIn", Tween::EasingType_::quinticIn},
-  {"quinticOut", Tween::EasingType_::quinticOut},
-  {"quinticInOut", Tween::EasingType_::quinticInOut},
-  // { "sinuisodal", Tween::EasingType_::sinuisodal },
-  {"exponentialIn", Tween::EasingType_::exponentialIn},
-  {"exponentialOut", Tween::EasingType_::exponentialOut},
-  {"exponentialInOut", Tween::EasingType_::exponentialInOut},
-  {"circularIn", Tween::EasingType_::circularIn},
-  {"circularOut", Tween::EasingType_::circularOut},
-  {"circularInOut", Tween::EasingType_::circularInOut},
-  {"backIn", Tween::EasingType_::backIn},
-  {"backOut", Tween::EasingType_::backOut},
-  {"backInOut", Tween::EasingType_::backInOut},
-  {"elasticIn", Tween::EasingType_::elasticIn},
-  {"elasticOut", Tween::EasingType_::elasticOut},
-  {"elasticInOut", Tween::EasingType_::elasticInOut},
-  {"bounceIn", Tween::EasingType_::bounceIn},
-  {"bounceOut", Tween::EasingType_::bounceOut},
-  {"bounceInOut", Tween::EasingType_::bounceInOut}};
+    {"linear", Tween::EasingType_::linear},
+    {"quadraticIn", Tween::EasingType_::quadraticIn},
+    {"quadraticOut", Tween::EasingType_::quadraticOut},
+    {"quadraticInOut", Tween::EasingType_::quadraticInOut},
+    {"cubicIn", Tween::EasingType_::cubicIn},
+    {"cubicOut", Tween::EasingType_::cubicOut},
+    {"cubicInOut", Tween::EasingType_::cubicInOut},
+    {"quarticIn", Tween::EasingType_::quarticIn},
+    {"quarticOut", Tween::EasingType_::quarticOut},
+    {"quarticInOut", Tween::EasingType_::quarticInOut},
+    {"quinticIn", Tween::EasingType_::quinticIn},
+    {"quinticOut", Tween::EasingType_::quinticOut},
+    {"quinticInOut", Tween::EasingType_::quinticInOut},
+    // { "sinuisodal", Tween::EasingType_::sinuisodal },
+    {"exponentialIn", Tween::EasingType_::exponentialIn},
+    {"exponentialOut", Tween::EasingType_::exponentialOut},
+    {"exponentialInOut", Tween::EasingType_::exponentialInOut},
+    {"circularIn", Tween::EasingType_::circularIn},
+    {"circularOut", Tween::EasingType_::circularOut},
+    {"circularInOut", Tween::EasingType_::circularInOut},
+    {"backIn", Tween::EasingType_::backIn},
+    {"backOut", Tween::EasingType_::backOut},
+    {"backInOut", Tween::EasingType_::backInOut},
+    {"elasticIn", Tween::EasingType_::elasticIn},
+    {"elasticOut", Tween::EasingType_::elasticOut},
+    {"elasticInOut", Tween::EasingType_::elasticInOut},
+    {"bounceIn", Tween::EasingType_::bounceIn},
+    {"bounceOut", Tween::EasingType_::bounceOut},
+    {"bounceInOut", Tween::EasingType_::bounceInOut}};
 
-void Tween::OnInitialize(const YAML::Node & config)
-{
-  YamlReader reader(node_, config);
+void Tween::OnInitialize(const YAML::Node& config) {
+  YamlReader reader(config);
   std::string body_name = reader.Get<std::string>("body");
 
   // reciprocal, loop, or oneshot
@@ -107,17 +64,17 @@ void Tween::OnInitialize(const YAML::Node & config)
   // Boolean play pause topic
   std::string trigger_topic = reader.Get<std::string>("trigger_topic", "");
   if (trigger_topic != "") {
-    trigger_sub_ = node_->create_subscription<std_msgs::msg::Bool>(
-      trigger_topic, 1, std::bind(&Tween::TriggerCallback, this, std::placeholders::_1));
+    trigger_sub_ =
+        nh_->create_subscription<std_msgs::msg::Bool>(trigger_topic, 1, [this](const std_msgs::msg::Bool::SharedPtr msg){ TriggerCallback(*msg); });
   }
 
   body_ = GetModel()->GetBody(body_name);
   if (body_ == nullptr) {
     throw YAMLException("Body with name " + Q(body_name) + " does not exist");
   }
-  start_ = Pose(
-    body_->physics_body_->GetPosition().x, body_->physics_body_->GetPosition().y,
-    body_->physics_body_->GetAngle());
+  start_ = Pose(body_->physics_body_->GetPosition().x,
+                body_->physics_body_->GetPosition().y,
+                body_->physics_body_->GetAngle());
 
   // Validate the mode selection
   if (!Tween::mode_strings_.count(mode)) {
@@ -126,8 +83,8 @@ void Tween::OnInitialize(const YAML::Node & config)
   mode_ = Tween::mode_strings_.at(mode);
 
   tween_ = tweeny::from(0.0, 0.0, 0.0)
-             .to(delta_.x, delta_.y, delta_.theta)
-             .during((uint32)(duration_ * 1000.0));
+               .to(delta_.x, delta_.y, delta_.theta)
+               .during((uint32)(duration_ * 1000.0));
 
   Tween::EasingType_ easing_type;
   std::string easing = reader.Get<std::string>("easing", "linear");
@@ -234,28 +191,30 @@ void Tween::OnInitialize(const YAML::Node & config)
   // Make sure there are no unused keys
   reader.EnsureAccessedAllKeys();
 
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("Tween"),
-    "Initialized with params body(%p %s) "
-    "start ({%f,%f,%f}) "
-    "end ({%f,%f,%f}) "
-    "duration %f "
-    "mode: %s [%d] "
-    "easing: %s\n",
-    body_, body_->name_.c_str(), start_.x, start_.y, start_.theta, delta_.x, delta_.y, delta_.theta,
-    duration_, mode.c_str(), (int)mode_, easing.c_str());
+  RCLCPP_DEBUG(rclcpp::get_logger("Tween"),
+                  "Initialized with params body(%p %s) "
+                  "start ({%f,%f,%f}) "
+                  "end ({%f,%f,%f}) "
+                  "duration %f "
+                  "mode: %s [%d] "
+                  "easing: %s\n",
+                  body_, body_->name_.c_str(), start_.x, start_.y, start_.theta,
+                  delta_.x, delta_.y, delta_.theta, duration_, mode.c_str(),
+                  (int)mode_, easing.c_str());
 }
 
-void Tween::TriggerCallback(const std_msgs::msg::Bool::SharedPtr msg) { triggered_ = msg->data; }
+void Tween::TriggerCallback(const std_msgs::msg::Bool& msg) {
+  triggered_ = msg.data;
+}
 
-void Tween::BeforePhysicsStep(const Timekeeper & timekeeper)
-{
-  std::array<double, 3> v = tween_.step((uint32)(timekeeper.GetStepSize() * 1000.0));
-  rclcpp::Clock steady_clock = rclcpp::Clock(RCL_STEADY_TIME);
-  RCLCPP_DEBUG_THROTTLE(
-    rclcpp::get_logger("Tween"), steady_clock, 1000, "value %f,%f,%f step %f progress %f", v[0],
-    v[1], v[2], timekeeper.GetStepSize(), tween_.progress());
-  body_->physics_body_->SetTransform(b2Vec2(start_.x + v[0], start_.y + v[1]), start_.theta + v[2]);
+void Tween::BeforePhysicsStep(const Timekeeper& timekeeper) {
+  std::array<double, 3> v =
+      tween_.step((uint32)(timekeeper.GetStepSize() * 1000.0));
+  RCLCPP_DEBUG_THROTTLE(rclcpp::get_logger("Tween"), *nh_->get_clock(), (1.0)*1000, "value %f,%f,%f step %f progress %f",
+                           v[0], v[1], v[2], timekeeper.GetStepSize(),
+                           tween_.progress());
+  body_->physics_body_->SetTransform(b2Vec2(start_.x + v[0], start_.y + v[1]),
+                                     start_.theta + v[2]);
   // Tell Box2D to update the AABB and check for collisions for this object
   body_->physics_body_->SetAwake(true);
 
@@ -284,6 +243,6 @@ void Tween::BeforePhysicsStep(const Timekeeper & timekeeper)
     }
   }
 }
-}  // namespace flatland_plugins
+}
 
 PLUGINLIB_EXPORT_CLASS(flatland_plugins::Tween, flatland_server::ModelPlugin)

@@ -1,0 +1,183 @@
+# Two powered steering turrets and two passive casters at the opposite corners.
+bodies:
+- name: base_link
+  visual_z_offset: 0.2
+  type: dynamic
+  pose: [0, 0, 0]
+  color: [0.45, 0.25, 0.7, 1]
+  extrude: 0.3
+  footprints:
+  - type: polygon
+    points:
+    - [-0.85, -0.4]
+    - [0.85, -0.4]
+    - [0.85, 0.4]
+    - [-0.85, 0.4]
+    density: 150
+    layers: [all]
+    sensor: false
+- name: turret1
+  wheel_visual: {radius: 0.140, width: 0.110, center: [0, 0]}
+  type: dynamic
+  pose: [0.55, 0.25, 0]
+  color: &id001 [0.95, 0.55, 0.12, 1.0]
+  extrude: 0.16
+  footprints:
+  - type: polygon
+    points:
+    - [-0.14, -0.055]
+    - [0.14, -0.055]
+    - [0.14, 0.055]
+    - [-0.14, 0.055]
+    density: 2
+    layers: [all]
+    sensor: true
+- name: turret2
+  wheel_visual: {radius: 0.140, width: 0.110, center: [0, 0]}
+  type: dynamic
+  pose: [-0.55, -0.25, 0]
+  color: *id001
+  extrude: 0.16
+  footprints:
+  - type: polygon
+    points:
+    - [-0.14, -0.055]
+    - [0.14, -0.055]
+    - [0.14, 0.055]
+    - [-0.14, 0.055]
+    density: 2
+    layers: [all]
+    sensor: true
+- name: front_right_caster
+  wheel_visual: {radius: 0.120, width: 0.090, center: [0.08, 0]}
+  type: dynamic
+  pose: [0.55, -0.25, 3.141592653589793]
+  color: [0.22, 0.25, 0.28, 1]
+  extrude: 0.12
+  footprints:
+  - type: polygon
+    points: [[-0.04, -0.045], [0.20, -0.045], [0.20, 0.045], [-0.04, 0.045]]
+    density: 2
+    layers: [all]
+    sensor: true
+- name: rear_left_caster
+  wheel_visual: {radius: 0.120, width: 0.090, center: [0.08, 0]}
+  type: dynamic
+  pose: [-0.55, 0.25, 3.141592653589793]
+  color: [0.22, 0.25, 0.28, 1]
+  extrude: 0.12
+  footprints:
+  - type: polygon
+    points: [[-0.04, -0.045], [0.20, -0.045], [0.20, 0.045], [-0.04, 0.045]]
+    density: 2
+    layers: [all]
+    sensor: true
+joints:
+- type: revolute
+  name: turret1_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: turret1
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [0.55, 0.25]
+- type: revolute
+  name: turret2_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - name: turret2
+    anchor: [0, 0]
+  - name: base_link
+    anchor: [-0.55, -0.25]
+- type: revolute
+  name: front_right_caster_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - {name: front_right_caster, anchor: [0, 0]}
+  - {name: base_link, anchor: [0.55, -0.25]}
+- type: revolute
+  name: rear_left_caster_joint
+  color: [0, 0, 0, 0]
+  collide_connected: false
+  bodies:
+  - {name: rear_left_caster, anchor: [0, 0]}
+  - {name: base_link, anchor: [-0.55, 0.25]}
+plugins:
+- type: OmniDrive
+  name: drive
+  body: base_link
+  odom_frame_id: odom
+  pub_rate: 30
+  odom_pub: odom
+  ground_truth_pub: ground_truth/odom
+  ground_truth_pose_pub: ground_truth/pose
+  ground_truth_frame_id: map
+  odom_pose_noise: [0, 0, 0]
+  odom_twist_noise: [0, 0, 0]
+  enable_odom_tf_pub: false
+  enable_twist_pub: false
+  turret1_joint: turret1_joint
+  turret2_joint: turret2_joint
+  turret1_sub: drive/turret1/command
+  turret2_sub: drive/turret2/command
+  max_steer_angle: 3.141592653589793
+  caster_joints: [front_right_caster_joint, rear_left_caster_joint]
+  caster_alignment_rate: 8.0
+- type: Laser
+  name: laser
+  body: base_link
+  frame: laser
+  topic: scan
+  origin: [0, 0, 0]
+  range: 30
+  angle: {min: -3.141592653589793, max: 3.141592653589793, increment: 0.008726646259971648}
+  noise_std_dev: 0.005
+  update_rate: 15
+  layers: [all]
+  ignore_bodies: [base_link, turret1, turret2, front_right_caster, rear_left_caster]
+  max_body_elevation: 0.3
+  broadcast_tf: true
+- type: Imu
+  name: imu
+  body: base_link
+  imu_frame_id: imu_link
+  imu_pub: imu/data
+  ground_truth_pub: ground_truth/imu
+  pub_rate: 30
+  broadcast_tf: true
+  orientation_noise: [0.0001, 0.0001, 0.0001]
+  angular_velocity_noise: [0.001, 0.001, 0.001]
+  linear_acceleration_noise: [0.001, 0.001, 0.001]
+- type: MockLidar3D
+  name: lidar3d
+  body: base_link
+  frame: lidar3d
+  topic: lidar_points
+  origin: [0, 0, 0]
+  origin_z: 0.6
+  pcd_path: package://flatland/maps/warehouse/warehouse.pcd
+  num_rays: 360
+  elevations_deg: [-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30]
+  elev_tolerance_deg: 1.5
+  update_rate: 20
+  range_noise_std_dev: 0.01
+  layers: [all]
+- type: MockDetection
+  name: mock_camera
+  body: base_link
+  frame: camera_link
+  topic: detections
+  origin: [0, 0, 0]
+  model_prefixes: [pallet, box, cage, charger]
+  min_range: 0.15
+  max_range: 6.0
+  fov: 1.57
+  noise_std_dev: [0.01, 0.01, 0.02]
+  dropout_probability: 0.02
+  layers: [all]
+  broadcast_target_tf: false
+  update_rate: 10
+- {type: ModelTfPublisher, name: body_tf, reference: base_link, publish_tf_world: true, update_rate: 30}

@@ -47,87 +47,87 @@
 #ifndef FLATLAND_SERVER_FLATLAND_PLUGIN_H
 #define FLATLAND_SERVER_FLATLAND_PLUGIN_H
 
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wunused-parameter"
-
 #include <Box2D/Box2D.h>
 #include <flatland_server/timekeeper.h>
-#include <yaml-cpp/yaml.h>
-
+#include <flatland_server/ros_node.h>
 #include <rclcpp/rclcpp.hpp>
+#include <yaml-cpp/yaml.h>
 #include <string>
 
-namespace flatland_server
-{
-class FlatlandPlugin
-{
-public:
+namespace flatland_server {
+class FlatlandPlugin {
+ public:
   enum class PluginType { Invalid, Model, World };  // Different plugin Types
   std::string type_;                                ///< type of the plugin
   std::string name_;                                ///< name of the plugin
-  rclcpp::Node::SharedPtr node_;                    // ROS node
+  rclcpp::Node::SharedPtr nh_ = ros_node();         ///< ROS node handle
   PluginType plugin_type_;
 
   /*
-   * @brief Get PluginType
-   */
-  PluginType Type() { return plugin_type_; }
+  * @brief Get PluginType
+  */
+  const PluginType Type() { return plugin_type_; }
 
   /**
-   * @brief Get plugin name
-   */
-  const std::string & GetName() const { return name_; }
+  * @brief Get plugin name
+  */
+  const std::string &GetName() const { return name_; }
 
   /**
-   * @brief Get type of plugin
-   */
-  const std::string & GetType() const { return type_; }
+  * @brief Get type of plugin
+  */
+  const std::string &GetType() const { return type_; }
+
+  /**
+ * @brief The method for the particular model plugin to override and provide
+ * its own initialization
+ * @param[in] config The plugin YAML node
+ */
+  virtual void OnInitialize(const YAML::Node &config) = 0;
 
   /**
    * @brief This method is called before the Box2D physics step
    * @param[in] timekeeper provide time related information
    */
-  virtual void BeforePhysicsStep(const Timekeeper & timekeeper) {}
+  virtual void BeforePhysicsStep(const Timekeeper &timekeeper) {}
 
   /**
    * @brief This method is called after the Box2D physics step
    * @param[in] timekeeper provide time related information
    */
-  virtual void AfterPhysicsStep(const Timekeeper & timekeeper) {}
+  virtual void AfterPhysicsStep(const Timekeeper &timekeeper) {}
 
   /**
    * @brief A method that is called for all Box2D begin contacts
    * @param[in] contact Box2D contact
    */
-  virtual void BeginContact(b2Contact * contact) {}
+  virtual void BeginContact(b2Contact *contact) {}
 
   /**
    * @brief A method that is called for all Box2D end contacts
    * @param[in] contact Box2D contact
    */
-  virtual void EndContact(b2Contact * contact) {}
+  virtual void EndContact(b2Contact *contact) {}
 
   /**
    * @brief A method that is called for Box2D presolve
    * @param[in] contact Box2D contact
    * @param[in] oldManifold Manifold from the previous iteration
    */
-  virtual void PreSolve(b2Contact * contact, const b2Manifold * oldManifold) {}
+  virtual void PreSolve(b2Contact *contact, const b2Manifold *oldManifold) {}
 
   /**
    * @brief A method that is called for Box2D postsolve
    * @param[in] contact Box2D contact
    * @param[in] impulse Impulse from the collision resolution
    */
-  virtual void PostSolve(b2Contact * contact, const b2ContactImpulse * impulse) {}
+  virtual void PostSolve(b2Contact *contact, const b2ContactImpulse *impulse) {}
 
   /**
    * @brief Flatland plugin destructor
    */
   virtual ~FlatlandPlugin() = default;
 };
-}  // namespace flatland_server
-
-#pragma GCC diagnostic pop
+};  // namespace
 
 #endif  // FLATLAND_SERVER_FLATLAND_PLUGIN_H

@@ -48,7 +48,8 @@ class Bumper : public ModelPlugin {
 
   /// For keeping track of contacts
   std::map<b2Contact *, ContactState> contact_states_;
-  rclcpp::Publisher<flatland_msgs::msg::Collisions>::SharedPtr collisions_publisher_;  ///< For publishing the collisions
+  rclcpp::Publisher<flatland_msgs::msg::Collisions>::SharedPtr
+      collisions_publisher_;  ///< For publishing the collisions
 
   /**
    * @brief Initialization for the plugin

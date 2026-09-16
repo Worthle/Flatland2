@@ -110,14 +110,15 @@ ModelBody *ModelBody::MakeBody(b2World *physics_world,
       if (!m->visual_mesh_.empty()) {
         throw YAMLException("Use either visual_mesh or wheel_visual on a body");
       }
-      auto& visual = m->wheel_visual_;
+      auto &visual = m->wheel_visual_;
       visual.radius = wheel.Get<double>("radius");
       visual.width = wheel.Get<double>("width");
       visual.center = wheel.GetVec2("center", Vec2(0, 0));
       if (!std::isfinite(visual.radius) || visual.radius <= 0.0 ||
           !std::isfinite(visual.width) || visual.width <= 0.0 ||
           !std::isfinite(visual.center.x) || !std::isfinite(visual.center.y)) {
-        throw YAMLException("wheel_visual requires positive radius/width and a finite center");
+        throw YAMLException(
+            "wheel_visual requires positive radius/width and a finite center");
       }
       wheel.EnsureAccessedAllKeys();
     }

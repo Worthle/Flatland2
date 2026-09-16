@@ -5,10 +5,10 @@
 #ifndef FLATLAND_PLUGINS_FORKLIFT_H
 #define FLATLAND_PLUGINS_FORKLIFT_H
 
-#include <flatland_msgs/srv/lift_fork.hpp>
 #include <flatland_plugins/update_timer.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/types.h>
+#include <flatland_msgs/srv/lift_fork.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <std_msgs/msg/float32.hpp>
@@ -21,7 +21,8 @@ namespace flatland_plugins {
 
 /**
  * Forklift plugin: gives a model a set of "fork" bodies (e.g. the knives of an
- * a generic forklift) a lifted/lowered state. When lowered the forks sit on the ground and
+ * a generic forklift) a lifted/lowered state. When lowered the forks sit on the
+ * ground and
  * are drawn in the lowered color (red by default); when lifted they are raised
  * in Z and drawn in the lifted color (green by default), giving a pseudo-3D
  * view in RViz. The target height is commanded via a flatland_msgs/LiftFork
@@ -41,16 +42,16 @@ class Forklift : public ModelPlugin {
  public:
   std::vector<Body *> fork_bodies_;  ///< the fork bodies to control
 
-  Color lowered_color_;   ///< color drawn while lowered
-  Color lifted_color_;    ///< color drawn while lifted
-  double lift_height_;    ///< Z elevation (m) of the forks when lifted
+  Color lowered_color_;    ///< color drawn while lowered
+  Color lifted_color_;     ///< color drawn while lifted
+  double lift_height_;     ///< Z elevation (m) of the forks when lifted
   double fork_thickness_;  ///< extrusion height (m) for the 3D fork rendering
   double lift_speed_;      ///< animation speed (m/s), <= 0 = instant
 
   bool lifted_ = false;  ///< current lift TARGET state (as commanded)
   double current_elevation_ = 0.0;  ///< animated elevation of the forks
   double target_elevation_ = 0.0;   ///< elevation the animation moves toward
-  double update_rate_;   ///< rate to publish the state at
+  double update_rate_;              ///< rate to publish the state at
 
   UpdateTimer update_timer_;  ///< for managing the state publish rate
 

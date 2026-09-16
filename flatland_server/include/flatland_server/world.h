@@ -118,14 +118,14 @@ class World : public b2ContactListener {
    * @param[in] contact Box2D contact information
    * @param[in] oldManifold The manifold from the previous timestep
    */
-  void PreSolve(b2Contact *contact, const b2Manifold *oldManifold);
+  void PreSolve(b2Contact *contact, const b2Manifold *oldManifold) override;
 
   /**
    * @brief Box2D inherited pre solve
    * @param[in] contact Box2D contact information
    * @param[in] impulse The calculated impulse from the collision resolute
    */
-  void PostSolve(b2Contact *contact, const b2ContactImpulse *impulse);
+  void PostSolve(b2Contact *contact, const b2ContactImpulse *impulse) override;
 
   /*
    * @brief Load world plugins

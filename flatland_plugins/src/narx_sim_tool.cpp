@@ -4,8 +4,8 @@
 
 #include <flatland_plugins/narx_model.h>
 
-#include <cstdio>
 #include <cmath>
+#include <cstdio>
 #include <fstream>
 #include <iostream>
 #include <map>

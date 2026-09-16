@@ -6,8 +6,8 @@
 #include <flatland_plugins/update_timer.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/timekeeper.h>
-#include <rclcpp/rclcpp.hpp>
 #include <tf2_ros/transform_broadcaster.h>
+#include <rclcpp/rclcpp.hpp>
 
 #ifndef FLATLAND_PLUGINS_MODEL_TF_PUBLISHER_H
 #define FLATLAND_PLUGINS_MODEL_TF_PUBLISHER_H
@@ -28,8 +28,9 @@ class ModelTfPublisher : public ModelPlugin {
   Body *reference_body_;  ///< body used as a reference to other bodies
   double update_rate_;    ///< publish rate
 
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster;  ///< For publish ROS TF
-  UpdateTimer update_timer_;                ///< for managing update rate
+  std::shared_ptr<tf2_ros::TransformBroadcaster>
+      tf_broadcaster;         ///< For publish ROS TF
+  UpdateTimer update_timer_;  ///< for managing update rate
 
   /**
  * @brief Initialization for the plugin

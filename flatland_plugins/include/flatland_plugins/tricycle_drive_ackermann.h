@@ -4,13 +4,13 @@
 // Full license notices: LICENSE.
 
 #include <Box2D/Box2D.h>
-#include <flatland_plugins/update_timer.h>
 #include <flatland_plugins/dynamics_limits.h>
+#include <flatland_plugins/update_timer.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/timekeeper.h>
+#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <ackermann_msgs/msg/ackermann_drive_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <random>
 
@@ -31,10 +31,10 @@ class TricycleDriveAckermann : public flatland_server::ModelPlugin {
   double axel_track_;     ///< normal distrance between the rear two wheels
   double wheelbase_;      ///< distance between the front and rear wheel
   b2Vec2 rear_center_;    ///< middle point between the two rear wheels
-  bool invert_steering_angle_;     ///< whether to invert steering angle
-  double max_steer_angle_;         ///< max abs. steering allowed [rad]
-  DynamicsLimits angular_dynamics_; ///< Angular dynamics constraints
-  DynamicsLimits linear_dynamics_;  ///< Linear dynamics constraints
+  bool invert_steering_angle_;       ///< whether to invert steering angle
+  double max_steer_angle_;           ///< max abs. steering allowed [rad]
+  DynamicsLimits angular_dynamics_;  ///< Angular dynamics constraints
+  DynamicsLimits linear_dynamics_;   ///< Linear dynamics constraints
   double delta_command_;  ///< The current target (commanded) wheel angle
   double theta_f_;        ///< The current angular offset of the front wheel
   double d_delta_;        ///< The current angular speed of the front wheel
@@ -49,11 +49,14 @@ class TricycleDriveAckermann : public flatland_server::ModelPlugin {
   nav_msgs::msg::Odometry odom_msg_;
   nav_msgs::msg::Odometry ground_truth_msg_;
   geometry_msgs::msg::PoseWithCovarianceStamped pose_msg_;
-  rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr twist_sub_;
+  rclcpp::Subscription<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr
+      twist_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr ground_truth_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr ground_truth_pose_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+      ground_truth_pose_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+      pose_pub_;
 
   UpdateTimer update_timer_;
   // realized-motion odometry: pose sampled at the previous publish

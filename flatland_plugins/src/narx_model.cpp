@@ -43,9 +43,8 @@ void NarxCoupledModel::Load(const std::string &path) {
     const std::string key = kv.first.as<std::string>();
     YAML::Node node = kv.second;
     NarxSubModel m;
-    m.output_name = node["output_name"]
-                        ? node["output_name"].as<std::string>()
-                        : key;
+    m.output_name =
+        node["output_name"] ? node["output_name"].as<std::string>() : key;
 
     YAML::Node inputs = node["input_names"];
     if (!inputs || !inputs.IsSequence() || inputs.size() == 0) {
@@ -72,8 +71,8 @@ void NarxCoupledModel::Load(const std::string &path) {
       if (factors) {
         for (const auto &f : factors) {
           if (!f.IsSequence() || f.size() != 2) {
-            Fail(path, "sub-model \"" + key +
-                           "\" factor must be a [var, lag] pair");
+            Fail(path,
+                 "sub-model \"" + key + "\" factor must be a [var, lag] pair");
           }
           const std::string var = f[0].as<std::string>();
           NarxFactor factor;
@@ -92,8 +91,8 @@ void NarxCoupledModel::Load(const std::string &path) {
             try {
               idx = std::stoi(var.substr(1));
             } catch (const std::exception &) {
-              Fail(path, "sub-model \"" + key + "\" bad factor var \"" + var +
-                             "\"");
+              Fail(path,
+                   "sub-model \"" + key + "\" bad factor var \"" + var + "\"");
             }
             if (idx < 1 || idx > static_cast<int>(m.input_names.size())) {
               Fail(path, "sub-model \"" + key + "\" factor var \"" + var +
@@ -151,8 +150,7 @@ void NarxCoupledModel::Load(const std::string &path) {
   for (const NarxSubModel &m : sub_models_) {
     for (const NarxTerm &t : m.terms) {
       for (const NarxFactor &f : t.factors) {
-        if (f.var >= 0 && f.lag == 0 &&
-            m.input_sources[f.var].is_prediction) {
+        if (f.var >= 0 && f.lag == 0 && m.input_sources[f.var].is_prediction) {
           Fail(path, "sub-model \"" + m.output_name +
                          "\" uses a cross-coupled input at lag 0");
         }

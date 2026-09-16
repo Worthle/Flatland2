@@ -28,11 +28,17 @@ class PcdSampler {
   PcdSampler(const std::vector<float>& map, std::vector<double> elevations,
              double tolerance, size_t bins, double min_range, double max_range,
              size_t threads)
-      : map_(map), elevations_(std::move(elevations)), tolerance_(tolerance),
-        bins_(bins), min_r2_(min_range * min_range), max_r2_(max_range * max_range),
+      : map_(map),
+        elevations_(std::move(elevations)),
+        tolerance_(tolerance),
+        bins_(bins),
+        min_r2_(min_range * min_range),
+        max_r2_(max_range * max_range),
         result_(bins * elevations_.size()) {
-    const size_t count = std::max<size_t>(1, std::min(threads, map.size() / (3 * 4096)));
-    for (size_t i = 0; i < count; ++i) chunks_.emplace_back(bins * elevations_.size());
+    const size_t count =
+        std::max<size_t>(1, std::min(threads, map.size() / (3 * 4096)));
+    for (size_t i = 0; i < count; ++i)
+      chunks_.emplace_back(bins * elevations_.size());
     if (count > 1) pool_ = std::make_unique<ThreadPool>(count);
   }
 
@@ -47,8 +53,10 @@ class PcdSampler {
       auto project = [&, chunk, x, y, z, c, s]() {
         Project(chunk, x, y, z, c, s);
       };
-      if (pool_) jobs.push_back(pool_->enqueue(project));
-      else project();
+      if (pool_)
+        jobs.push_back(pool_->enqueue(project));
+      else
+        project();
     }
     for (auto& job : jobs) job.get();
     result_ = chunks_[0];
@@ -66,7 +74,8 @@ class PcdSampler {
   }
 
  private:
-  void Project(size_t chunk, double sx, double sy, double sz, double c, double s) {
+  void Project(size_t chunk, double sx, double sy, double sz, double c,
+               double s) {
     auto& output = chunks_[chunk];
     std::fill(output.range_squared.begin(), output.range_squared.end(),
               std::numeric_limits<float>::max());
@@ -75,7 +84,8 @@ class PcdSampler {
     const size_t last = count * (chunk + 1) / chunks_.size();
     for (size_t point = first; point < last; ++point) {
       const size_t i = point * 3;
-      const double dx = map_[i] - sx, dy = map_[i + 1] - sy, dz = map_[i + 2] - sz;
+      const double dx = map_[i] - sx, dy = map_[i + 1] - sy,
+                   dz = map_[i + 2] - sz;
       const float r2 = static_cast<float>(dx * dx + dy * dy + dz * dz);
       if (!std::isfinite(r2) || r2 > max_r2_ || r2 < min_r2_) continue;
       const double xs = c * dx + s * dy, ys = -s * dx + c * dy;
@@ -93,8 +103,8 @@ class PcdSampler {
       }
       if (best_diff > tolerance_) continue;
       const double az = std::atan2(ys, xs);
-      const size_t bin = std::min(bins_ - 1,
-          static_cast<size_t>((az + M_PI) / (2.0 * M_PI) * bins_));
+      const size_t bin = std::min(
+          bins_ - 1, static_cast<size_t>((az + M_PI) / (2.0 * M_PI) * bins_));
       const size_t index = bin * elevations_.size() + channel;
       if (r2 < output.range_squared[index]) {
         output.range_squared[index] = r2;

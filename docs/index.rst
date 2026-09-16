@@ -12,16 +12,9 @@ BSD3 License.
 
 Class APIs are documented `here <http://flatland-simulator-api.readthedocs.io/>`_.
 
-.. note::
-
-   This branch contains the Flatland 2 ROS 2 Humble extensions. Start with the
-   :doc:`included_plugins/plugin_catalog` for the current plugin inventory,
-   including the types added since upstream Humble. The new plugin references
-   describe the public implementation; some inherited tutorials retain ROS 1
-   commands. Use the repository README for the current Docker and ROS 2 launch
-   workflow. Robot assets and teleop live in the separate ``flatland_examples``
-   companion package; plugin configuration examples referring to that package
-   require it to be installed.
+Flatland 2 adds drive, terrain, sensor, and payload plugins, plus body extrusion,
+mesh and wheel visuals in RViz2. See :doc:`included_plugins/plugin_catalog`
+and :doc:`visualization` for configuration.
 
 .. toctree::
    :maxdepth: 2
@@ -29,6 +22,7 @@ Class APIs are documented `here <http://flatland-simulator-api.readthedocs.io/>`
 
    overview
    quick_start
+   visualization
 
 .. toctree::
    :maxdepth: 2

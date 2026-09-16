@@ -7,9 +7,9 @@
 #include <flatland_plugins/tween.h>
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/model_plugin.h>
+#include <tf2/utils.h>
 #include <pluginlib/class_list_macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace flatland_plugins {
@@ -64,8 +64,10 @@ void Tween::OnInitialize(const YAML::Node& config) {
   // Boolean play pause topic
   std::string trigger_topic = reader.Get<std::string>("trigger_topic", "");
   if (trigger_topic != "") {
-    trigger_sub_ =
-        nh_->create_subscription<std_msgs::msg::Bool>(trigger_topic, 1, [this](const std_msgs::msg::Bool::SharedPtr msg){ TriggerCallback(*msg); });
+    trigger_sub_ = nh_->create_subscription<std_msgs::msg::Bool>(
+        trigger_topic, 1, [this](const std_msgs::msg::Bool::SharedPtr msg) {
+          TriggerCallback(*msg);
+        });
   }
 
   body_ = GetModel()->GetBody(body_name);
@@ -192,15 +194,15 @@ void Tween::OnInitialize(const YAML::Node& config) {
   reader.EnsureAccessedAllKeys();
 
   RCLCPP_DEBUG(rclcpp::get_logger("Tween"),
-                  "Initialized with params body(%p %s) "
-                  "start ({%f,%f,%f}) "
-                  "end ({%f,%f,%f}) "
-                  "duration %f "
-                  "mode: %s [%d] "
-                  "easing: %s\n",
-                  body_, body_->name_.c_str(), start_.x, start_.y, start_.theta,
-                  delta_.x, delta_.y, delta_.theta, duration_, mode.c_str(),
-                  (int)mode_, easing.c_str());
+               "Initialized with params body(%p %s) "
+               "start ({%f,%f,%f}) "
+               "end ({%f,%f,%f}) "
+               "duration %f "
+               "mode: %s [%d] "
+               "easing: %s\n",
+               body_, body_->name_.c_str(), start_.x, start_.y, start_.theta,
+               delta_.x, delta_.y, delta_.theta, duration_, mode.c_str(),
+               (int)mode_, easing.c_str());
 }
 
 void Tween::TriggerCallback(const std_msgs::msg::Bool& msg) {
@@ -210,9 +212,10 @@ void Tween::TriggerCallback(const std_msgs::msg::Bool& msg) {
 void Tween::BeforePhysicsStep(const Timekeeper& timekeeper) {
   std::array<double, 3> v =
       tween_.step((uint32)(timekeeper.GetStepSize() * 1000.0));
-  RCLCPP_DEBUG_THROTTLE(rclcpp::get_logger("Tween"), *nh_->get_clock(), (1.0)*1000, "value %f,%f,%f step %f progress %f",
-                           v[0], v[1], v[2], timekeeper.GetStepSize(),
-                           tween_.progress());
+  RCLCPP_DEBUG_THROTTLE(rclcpp::get_logger("Tween"), *nh_->get_clock(),
+                        (1.0) * 1000, "value %f,%f,%f step %f progress %f",
+                        v[0], v[1], v[2], timekeeper.GetStepSize(),
+                        tween_.progress());
   body_->physics_body_->SetTransform(b2Vec2(start_.x + v[0], start_.y + v[1]),
                                      start_.theta + v[2]);
   // Tell Box2D to update the AABB and check for collisions for this object

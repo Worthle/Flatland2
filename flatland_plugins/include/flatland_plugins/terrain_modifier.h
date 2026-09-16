@@ -15,7 +15,8 @@ namespace flatland_plugins {
 class TerrainModifier : public flatland_server::ModelPlugin {
  public:
   void OnInitialize(const YAML::Node& config) override;
-  void BeforePhysicsStep(const flatland_server::Timekeeper& timekeeper) override;
+  void BeforePhysicsStep(
+      const flatland_server::Timekeeper& timekeeper) override;
 
  private:
   struct SlipParams {
@@ -37,16 +38,15 @@ class TerrainModifier : public flatland_server::ModelPlugin {
   };
 
   struct SlopeParams {
-  bool enable = false;
-  double angle_deg = 0.0;
-  double downhill_heading_deg = 0.0;
-  double rolling_damp = 0.0;
-  double v_cap = 0.0;
-  double side_slip_gain = 0.0;
+    bool enable = false;
+    double angle_deg = 0.0;
+    double downhill_heading_deg = 0.0;
+    double rolling_damp = 0.0;
+    double v_cap = 0.0;
+    double side_slip_gain = 0.0;
 
-  b2Vec2 downhill_unit = b2Vec2(1.0f, 0.0f);
+    b2Vec2 downhill_unit = b2Vec2(1.0f, 0.0f);
   };
-
 
   struct Patch {
     std::string name;

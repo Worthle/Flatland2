@@ -44,8 +44,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <rclcpp/rclcpp.hpp>
 #include <signal.h>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
 #include "flatland_server/debug_visualization.h"

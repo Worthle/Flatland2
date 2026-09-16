@@ -33,8 +33,7 @@ Forklift::~Forklift() {
 }
 
 void Forklift::SetTargetElevation(double elevation_m) {
-  target_elevation_ =
-      std::max(0.0, std::min(elevation_m, lift_height_));
+  target_elevation_ = std::max(0.0, std::min(elevation_m, lift_height_));
   lifted_ = target_elevation_ > 0.0;
   if (lift_speed_ <= 0.0) {
     current_elevation_ = target_elevation_;
@@ -60,7 +59,8 @@ void Forklift::OnInitialize(const YAML::Node &config) {
 
   // ROS interface
   std::string service_name = reader.Get<std::string>("service", "fork/lift");
-  std::string state_topic = reader.Get<std::string>("state_topic", "fork/state");
+  std::string state_topic =
+      reader.Get<std::string>("state_topic", "fork/state");
   std::string height_topic =
       reader.Get<std::string>("height_topic", "fork/height");
   bool initial_lifted = reader.Get<bool>("initial_lifted", false);
@@ -80,14 +80,11 @@ void Forklift::OnInitialize(const YAML::Node &config) {
   }
 
   // State publisher and lift/lower service (namespaced to this model)
-  state_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      state_topic, 1);
-  height_pub_ = nh_->create_publisher<std_msgs::msg::Float32>(
-      height_topic, 1);
+  state_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(state_topic, 1);
+  height_pub_ = nh_->create_publisher<std_msgs::msg::Float32>(height_topic, 1);
   lift_srv_ = nh_->create_service<flatland_msgs::srv::LiftFork>(
-      service_name,
-      std::bind(&Forklift::OnLiftRequest, this, std::placeholders::_1,
-                std::placeholders::_2));
+      service_name, std::bind(&Forklift::OnLiftRequest, this,
+                              std::placeholders::_1, std::placeholders::_2));
 
   update_timer_.SetRate(update_rate_);
   forklift_registry[GetModel()] = this;
@@ -145,8 +142,7 @@ void Forklift::OnLiftRequest(
 
   response->success = true;
   response->message = "forks moving to " + std::to_string(target_elevation_) +
-                      " m (fraction " + std::to_string(request->fraction) +
-                      ")";
+                      " m (fraction " + std::to_string(request->fraction) + ")";
 }
 
 void Forklift::BeforePhysicsStep(const Timekeeper &timekeeper) {

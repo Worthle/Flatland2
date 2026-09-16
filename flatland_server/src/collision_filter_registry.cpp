@@ -136,11 +136,13 @@ uint16_t CollisionFilterRegistry::GetCategoryBits(
   for (const auto &layer : layers) {
     int layer_id = LookUpLayerId(layer);
 
-    if (layer_id < 0 && invalid_layers) {
-      invalid_layers->push_back(layer);
-    } else {
-      category_bits |= 1 << layer_id;
+    if (layer_id < 0 || layer_id >= MAX_LAYERS) {
+      if (invalid_layers) {
+        invalid_layers->push_back(layer);
+      }
+      continue;
     }
+    category_bits |= uint16_t{1} << layer_id;
   }
 
   return category_bits;

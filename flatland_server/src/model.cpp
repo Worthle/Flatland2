@@ -107,10 +107,11 @@ void Model::LoadBodies(YamlReader &bodies_reader) {
     for (int i = 0; i < bodies_reader.NodeSize(); i++) {
       YamlReader body_reader = bodies_reader.Subnode(i, YamlReader::MAP);
       if (!body_reader.Get<bool>("enabled", "true")) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Body "
-                        << Q(name_) << "."
-                        << body_reader.Get<std::string>("name", "unnamed")
-                        << " disabled");
+        RCLCPP_INFO_STREAM(
+            rclcpp::get_logger("flatland"),
+            "Body " << Q(name_) << "."
+                    << body_reader.Get<std::string>("name", "unnamed")
+                    << " disabled");
         continue;
       }
       ModelBody *b =
@@ -133,10 +134,11 @@ void Model::LoadJoints(YamlReader &joints_reader) {
     for (int i = 0; i < joints_reader.NodeSize(); i++) {
       YamlReader joint_reader = joints_reader.Subnode(i, YamlReader::MAP);
       if (!joint_reader.Get<bool>("enabled", "true")) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Joint "
-                        << Q(name_) << "."
-                        << joint_reader.Get<std::string>("name", "unnamed")
-                        << " disabled");
+        RCLCPP_INFO_STREAM(
+            rclcpp::get_logger("flatland"),
+            "Joint " << Q(name_) << "."
+                     << joint_reader.Get<std::string>("name", "unnamed")
+                     << " disabled");
         continue;
       }
       Joint *j = Joint::MakeJoint(physics_world_, this, joint_reader);
@@ -268,10 +270,10 @@ void Model::DebugVisualize() const {
 
 void Model::DebugOutput() const {
   RCLCPP_DEBUG(rclcpp::get_logger("Model"),
-                  "Model %p: physics_world(%p) name(%s) namespace(%s) "
-                  "num_bodies(%lu) num_joints(%lu)",
-                  this, physics_world_, name_.c_str(), namespace_.c_str(),
-                  bodies_.size(), joints_.size());
+               "Model %p: physics_world(%p) name(%s) namespace(%s) "
+               "num_bodies(%lu) num_joints(%lu)",
+               this, physics_world_, name_.c_str(), namespace_.c_str(),
+               bodies_.size(), joints_.size());
 
   for (const auto &body : bodies_) {
     body->DebugOutput();

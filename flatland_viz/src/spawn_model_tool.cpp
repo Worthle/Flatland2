@@ -28,7 +28,8 @@ namespace flatland_viz {
 QString SpawnModelTool::path_to_model_file_;
 QString SpawnModelTool::model_name;
 
-SpawnModelTool::SpawnModelTool() : moving_model_node_(nullptr), arrow_(nullptr) {
+SpawnModelTool::SpawnModelTool()
+    : moving_model_node_(nullptr), arrow_(nullptr) {
   shortcut_key_ = 'm';
 }
 

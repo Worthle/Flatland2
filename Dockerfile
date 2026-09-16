@@ -10,7 +10,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-humble-visualization-msgs ros-humble-interactive-markers \
     ros-humble-ackermann-msgs ros-humble-rviz2 ros-humble-rviz-common \
     ros-humble-rviz-default-plugins ros-humble-rviz-rendering qtbase5-dev \
-    ros-humble-rclpy \
+    ros-humble-rclpy ros-humble-nav2-map-server ros-humble-nav2-lifecycle-manager \
+    ros-humble-ament-cmake-gtest \
     && rm -rf /var/lib/apt/lists/*
 FROM dependencies AS runtime
 WORKDIR /flatland_ws
@@ -22,7 +23,9 @@ COPY flatland_viz/ src/flatland_viz/
 ARG BUILD_JOBS=2
 RUN source /opt/ros/humble/setup.bash && \
     MAKEFLAGS=-j${BUILD_JOBS} colcon build --executor sequential \
-    --cmake-args -DCMAKE_BUILD_TYPE=Release && rm -rf build log
+    --cmake-args -DCMAKE_BUILD_TYPE=Release && \
+    colcon test --executor sequential --return-code-on-test-failure && \
+    colcon test-result --verbose && rm -rf build log
 COPY tests/ /opt/flatland-tests/
 COPY docker-entrypoint.sh /docker-entrypoint.sh
 ENTRYPOINT ["/docker-entrypoint.sh"]

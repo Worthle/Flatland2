@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Exercise the core server and plugins without the examples package."""
+"""Exercise world loading, drive motion, sensing, and pause/resume."""
 import math
 from pathlib import Path
 import signal
+import struct
 import subprocess
 import tempfile
 import time
@@ -10,7 +11,7 @@ import time
 import rclpy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
-from sensor_msgs.msg import LaserScan
+from sensor_msgs.msg import LaserScan, PointCloud2
 from std_srvs.srv import Empty
 from rclpy.qos import qos_profile_sensor_data
 
@@ -29,7 +30,8 @@ def main():
         subscriptions = [node.create_subscription(kind, topic,
             lambda message, key=topic: latest.__setitem__(key, message),
             qos_profile_sensor_data)
-            for topic, kind in [('/odom', Odometry), ('/scan', LaserScan)]]
+            for topic, kind in [('/odom', Odometry), ('/scan', LaserScan),
+                                ('/lidar_points', PointCloud2)]]
         publisher = node.create_publisher(Twist, '/cmd_vel', 10)
         command = Twist()
         timer = node.create_timer(.05, lambda: publisher.publish(command))
@@ -52,7 +54,12 @@ def main():
             node.destroy_client(client)
 
         try:
-            wait(lambda: '/odom' in latest and '/scan' in latest)
+            wait(lambda: all(topic in latest for topic in ('/odom', '/scan', '/lidar_points')))
+            cloud = latest['/lidar_points']
+            z_offset = next(field.offset for field in cloud.fields if field.name == 'z')
+            ceiling = [struct.unpack_from('<f', cloud.data, offset + z_offset)[0]
+                       for offset in range(0, len(cloud.data), cloud.point_step)]
+            assert sum(abs(z - 2.0) < 1e-6 for z in ceiling) == 12, ceiling
             ranges = [value for value in latest['/scan'].ranges if math.isfinite(value)]
             assert ranges and 2.8 < min(ranges) < 3.2, ranges
             assert latest['/scan'].header.frame_id == 'laser'
@@ -73,7 +80,7 @@ def main():
             assert latest['/odom'].header.stamp == paused
             call('/resume')
             wait(lambda: latest['/odom'].header.stamp != paused)
-            print('PASS: core world loading, DiffDrive motion, laser geometry, odometry and pause/resume')
+            print('PASS: world loading, drive motion, laser and ceiling geometry, odometry and pause/resume')
         except Exception:
             log.seek(0)
             print(log.read()[-6000:])

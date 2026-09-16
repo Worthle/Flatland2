@@ -1,7 +1,7 @@
 #include <flatland_viz/pause_sim_tool.h>
 
-#include <rviz_common/display_context.hpp>
 #include <pluginlib/class_list_macros.hpp>
+#include <rviz_common/display_context.hpp>
 
 namespace flatland_viz {
 
@@ -18,8 +18,7 @@ void PauseSimTool::onInitialize() {
 // Each time the user selects the tool, toggle the simulation pause state.
 void PauseSimTool::activate() {
   if (!pause_client_->service_is_ready()) {
-    RCLCPP_WARN(node_->get_logger(),
-                "toggle_pause service not available yet");
+    RCLCPP_WARN(node_->get_logger(), "toggle_pause service not available yet");
     return;
   }
   auto request = std::make_shared<std_srvs::srv::Empty::Request>();

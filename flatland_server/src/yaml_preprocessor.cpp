@@ -47,11 +47,11 @@
 #include "flatland_server/yaml_preprocessor.h"
 
 #include <flatland_server/ros_node.h>
-#include <rclcpp/rclcpp.hpp>
 #include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/node/type.h>
 #include <yaml-cpp/null.h>
+#include <rclcpp/rclcpp.hpp>
 
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/filesystem/path.hpp>
@@ -75,15 +75,17 @@ void YamlPreprocessor::ProcessNodes(YAML::Node &node,
                                     const std::string &ref_path) {
   switch (node.Type()) {
     case YAML::NodeType::Sequence: {
-      // copy the elements to a new sequence, checking for $[include] expressions
+      // copy the elements to a new sequence, checking for $[include]
+      // expressions
       // as we go. If an include is found, replace it with one or more nodes
       // parsed from the included file.
       YAML::Node new_sequence = YAML::Node(YAML::NodeType::Sequence);
       for (YAML::Node child : node) {
         std::vector<YAML::Node> included_nodes = {};
         if (ProcessSequenceIncludeNode(included_nodes, child, ref_path)) {
-          RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Sequence include yielded " << included_nodes.size()
-                                                      << " nodes");
+          RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                             "Sequence include yielded "
+                                 << included_nodes.size() << " nodes");
           // node was an $include
           for (auto &include_child : included_nodes) {
             // ProcessSequenceIncludeNode handles processing of children itself.
@@ -114,7 +116,8 @@ void YamlPreprocessor::ProcessNodes(YAML::Node &node,
       break;
     }
     default:
-      RCLCPP_DEBUG_STREAM(rclcpp::get_logger("flatland"), 
+      RCLCPP_DEBUG_STREAM(
+          rclcpp::get_logger("flatland"),
           "Yaml Preprocessor found an unexpected type: " << node.Type());
       break;
   }
@@ -124,7 +127,8 @@ void YamlPreprocessor::ProcessEvalNode(YAML::Node &node) {
   std::string value =
       node.as<std::string>().substr(strlen(kEvalMarker));  // omit the $parse
   boost::algorithm::trim(value);                           // trim whitespace
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Attempting to parse lua " << value);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Attempting to parse lua "
+                                                         << value);
 
   if (value.find("return ") == std::string::npos) {  // Has no return statement
     value = "return " + value;
@@ -147,23 +151,29 @@ void YamlPreprocessor::ProcessEvalNode(YAML::Node &node) {
       int t = lua_type(L, 1);
       if (t == LUA_TNIL) {
         node = "";
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Preprocessor parsed " << value << " as empty string");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                           "Preprocessor parsed " << value
+                                                  << " as empty string");
       } else if (t == LUA_TBOOLEAN) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Preprocessor parsed "
-                        << value << " as bool "
-                        << (lua_toboolean(L, 1) ? "true" : "false"));
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                           "Preprocessor parsed "
+                               << value << " as bool "
+                               << (lua_toboolean(L, 1) ? "true" : "false"));
         node = lua_toboolean(L, 1) ? "true" : "false";
       } else if (t == LUA_TSTRING || t == LUA_TNUMBER) {
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Preprocessor parsed " << value << " as "
-                                               << lua_tostring(L, 1));
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                           "Preprocessor parsed " << value << " as "
+                                                  << lua_tostring(L, 1));
         node = lua_tostring(L, 1);
       } else {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("flatland"), "No lua output for " << value);
+        RCLCPP_ERROR_STREAM(rclcpp::get_logger("flatland"), "No lua output for "
+                                                                << value);
       }
     }
   } catch (
       ...) { /* Something went wrong parsing the lua, or gettings its results */
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("flatland"), "Lua error in: " << value);
+    RCLCPP_ERROR_STREAM(rclcpp::get_logger("flatland"),
+                        "Lua error in: " << value);
   }
 }
 std::string YamlPreprocessor::ResolveIncludeFilePath(
@@ -172,13 +182,15 @@ std::string YamlPreprocessor::ResolveIncludeFilePath(
   fs::path f(filename);
   // already an absolute path, return as-is.
   if (f.is_absolute()) {
-    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("flatland"), "Path is already absolute.");
+    RCLCPP_DEBUG_STREAM(rclcpp::get_logger("flatland"),
+                        "Path is already absolute.");
     return filename;
   }
   // if we're not loading from a file, then we can't resolve relative paths.
   // just pass along and hope the caller is requesting something in the CWD.
   if (ref_path.empty()) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"), 
+    RCLCPP_WARN_STREAM(
+        rclcpp::get_logger("flatland"),
         "$include specified a relative path but no original filename "
         "specified");
     return filename;
@@ -196,7 +208,8 @@ void YamlPreprocessor::ProcessIncludeNode(YAML::Node &node,
                                           const std::string &ref_path) {
   // omit the $include
   std::string value = node.as<std::string>().substr(strlen(kIncludeMarker));
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Attempting to parse include: " << value);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                     "Attempting to parse include: " << value);
   boost::algorithm::trim(value);  // remove whitespace
 
   // format the common file & include info for any thrown exceptions.
@@ -209,7 +222,8 @@ void YamlPreprocessor::ProcessIncludeNode(YAML::Node &node,
     node = YAML::LoadFile(path);
     // recursively process the included file, too
     ProcessNodes(node, path);
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Successfully loaded include file " + path);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                       "Successfully loaded include file " + path);
   } catch (const YAML::BadFile &) {
     throw YAMLException("File specified in $include does not exist," +
                         format_error_info());
@@ -239,7 +253,8 @@ bool YamlPreprocessor::ProcessSequenceIncludeNode(
   boost::algorithm::trim(value);
   out_elems.clear();
 
-  RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Attempting to parse sequence include: " << value);
+  RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                     "Attempting to parse sequence include: " << value);
 
   // format the common file & include info for any thrown exceptions.
   const auto format_error_info = [&]() {
@@ -254,7 +269,8 @@ bool YamlPreprocessor::ProcessSequenceIncludeNode(
     for (auto &included_node : out_elems) {
       ProcessNodes(included_node, path);
     }
-    RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"), "Successfully loaded sequence include file " + path);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("flatland"),
+                       "Successfully loaded sequence include file " + path);
 
   } catch (const YAML::BadFile &) {
     throw YAMLException("File specified in $[include] does not exist," +
@@ -302,10 +318,12 @@ int YamlPreprocessor::LuaGetEnv(lua_State *L) {
     }
   } else {              // no default
     if (env == NULL) {  // Push back a nil
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"), "No environment variable for: " << name);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"),
+                         "No environment variable for: " << name);
       lua_pushnil(L);
     } else {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"), "Found env for " << name);
+      RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"), "Found env for "
+                                                             << name);
       try {  // Try to push a number
         double x = boost::lexical_cast<double>(env);
         lua_pushnumber(L, x);
@@ -336,8 +354,8 @@ int YamlPreprocessor::LuaGetParam(lua_State *L) {
                              << name);
       lua_pushnil(L);
     }
-  } else {        // no default
-    if (!has) {   // Push back a nil
+  } else {       // no default
+    if (!has) {  // Push back a nil
       RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"),
                          "No rosparam found for: " << name);
       lua_pushnil(L);

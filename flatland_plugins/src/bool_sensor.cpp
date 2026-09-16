@@ -40,13 +40,12 @@ void BoolSensor::OnInitialize(const YAML::Node &config) {
   update_timer_.SetRate(update_rate_);
 
   // Init publisher
-  publisher_ =
-      nh_->create_publisher<std_msgs::msg::Bool>(topic_name, 1);
+  publisher_ = nh_->create_publisher<std_msgs::msg::Bool>(topic_name, 1);
 
   RCLCPP_DEBUG(rclcpp::get_logger("BoolSensor"),
-                  "Initialized with params: topic(%s) body(%s) "
-                  "update_rate(%f)",
-                  topic_name.c_str(), body_name.c_str(), update_rate_);
+               "Initialized with params: topic(%s) body(%s) "
+               "update_rate(%f)",
+               topic_name.c_str(), body_name.c_str(), update_rate_);
 }
 
 void BoolSensor::AfterPhysicsStep(const Timekeeper &timekeeper) {

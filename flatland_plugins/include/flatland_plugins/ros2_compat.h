@@ -5,10 +5,10 @@
 #ifndef FLATLAND_PLUGINS_ROS2_COMPAT_H
 #define FLATLAND_PLUGINS_ROS2_COMPAT_H
 
-#include <geometry_msgs/msg/quaternion.hpp>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <geometry_msgs/msg/quaternion.hpp>
 #include <string>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace flatland_plugins {
 

@@ -13,7 +13,7 @@ namespace flatland_plugins {
 
 class UpdateTimer {
  public:
-  rclcpp::Duration period_{0, 0};                  ///< period of update
+  rclcpp::Duration period_{0, 0};                      ///< period of update
   rclcpp::Time last_update_time_{0, 0, RCL_ROS_TIME};  ///< last update time
 
   /**

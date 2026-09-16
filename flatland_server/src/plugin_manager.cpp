@@ -118,17 +118,20 @@ void PluginManager::LoadModelPlugin(Model *model, YamlReader &plugin_reader) {
 
   try {
     if (!plugin_reader.Get<bool>("enabled", "true")) {
-      RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"), "Plugin "
-                      << Q(model->name_) << "."
-                      << plugin_reader.Get<std::string>("name", "unnamed")
-                      << " disabled");
+      RCLCPP_WARN_STREAM(
+          rclcpp::get_logger("flatland"),
+          "Plugin " << Q(model->name_) << "."
+                    << plugin_reader.Get<std::string>("name", "unnamed")
+                    << " disabled");
       return;
     }
   } catch (...) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"), "Body " << Q(model->name_) << "."
-                            << plugin_reader.Get<std::string>("name", "unnamed")
-                            << " enabled because flag failed to parse: "
-                            << plugin_reader.Get<std::string>("enabled"));
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("flatland"),
+                       "Body "
+                           << Q(model->name_) << "."
+                           << plugin_reader.Get<std::string>("name", "unnamed")
+                           << " enabled because flag failed to parse: "
+                           << plugin_reader.Get<std::string>("enabled"));
   }
 
   // remove the name, type and enabled of the YAML Node, the plugin does not
@@ -153,8 +156,8 @@ void PluginManager::LoadModelPlugin(Model *model, YamlReader &plugin_reader) {
     if (type.find("::") != std::string::npos) {
       model_plugin = model_plugin_loader_->createSharedInstance(type);
     } else {
-      model_plugin =
-          model_plugin_loader_->createSharedInstance("flatland_plugins::" + type);
+      model_plugin = model_plugin_loader_->createSharedInstance(
+          "flatland_plugins::" + type);
     }
   } catch (pluginlib::PluginlibException &e) {
     throw PluginException(msg + ": " + std::string(e.what()));
@@ -174,7 +177,8 @@ void PluginManager::LoadWorldPlugin(World *world, YamlReader &plugin_reader,
                                     YamlReader &world_config) {
   std::string name = plugin_reader.Get<std::string>("name");
   std::string type = plugin_reader.Get<std::string>("type");
-  RCLCPP_INFO(rclcpp::get_logger("PluginManager"), "finished load name and type");
+  RCLCPP_INFO(rclcpp::get_logger("PluginManager"),
+              "finished load name and type");
   // first check for duplicate plugins
   for (auto &it : world_plugins_) {
     if (it->GetName() == name && it->GetType() == type) {
@@ -199,8 +203,8 @@ void PluginManager::LoadWorldPlugin(World *world, YamlReader &plugin_reader,
     if (type.find("::") != std::string::npos) {
       world_plugin = world_plugin_loader_->createSharedInstance(type);
     } else {
-      world_plugin =
-          world_plugin_loader_->createSharedInstance("flatland_plugins::" + type);
+      world_plugin = world_plugin_loader_->createSharedInstance(
+          "flatland_plugins::" + type);
     }
   } catch (pluginlib::PluginlibException &e) {
     throw PluginException(msg + ": " + std::string(e.what()));

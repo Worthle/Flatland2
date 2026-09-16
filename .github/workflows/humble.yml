@@ -1,4 +1,4 @@
-name: ROS 2 Humble core
+name: ROS 2 Humble
 
 on:
   push:
@@ -15,9 +15,24 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
-      - name: Build the five core packages
-        run: docker build --build-arg BUILD_JOBS=2 -t flatland2:humble-core .
-      - name: Check core runtime without examples
+      - name: Build and unit test
+        run: docker build -t flatland2:latest .
+      - name: Check C++ formatting and analysis
         run: |
-          docker run --rm --network none -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp flatland2:humble-core python3 /opt/flatland-tests/server_smoke.py
-          docker run --rm --network none flatland2:humble-core python3 /opt/flatland-tests/dynamics.py
+          docker run --rm -v "$PWD:/src:ro" --entrypoint bash flatland2:latest -ec '
+            apt-get update
+            apt-get install -y --no-install-recommends clang-tidy-14 libtinfo5 curl
+            curl -fL --retry 2 https://releases.llvm.org/3.8.1/clang+llvm-3.8.1-x86_64-linux-gnu-ubuntu-16.04.tar.xz -o /tmp/llvm.tar.xz
+            mkdir -p /opt/llvm38
+            tar -xf /tmp/llvm.tar.xz -C /opt/llvm38 --strip-components=1
+            CLANG_FORMAT=/opt/llvm38/bin/clang-format /src/scripts/ci_prebuild.sh
+            mkdir -p /check_ws
+            cd /check_ws
+            source /opt/ros/humble/setup.bash
+            MAKEFLAGS=-j2 colcon build --base-paths /src --executor sequential --cmake-args -DCMAKE_EXPORT_COMPILE_COMMANDS=ON
+            /src/scripts/ci_postbuild.sh build
+          '
+      - name: Check simulation and dynamics
+        run: |
+          docker run --rm --network none -e RMW_IMPLEMENTATION=rmw_cyclonedds_cpp flatland2:latest python3 /opt/flatland-tests/server_smoke.py
+          docker run --rm --network none flatland2:latest python3 /opt/flatland-tests/dynamics.py

@@ -25,8 +25,8 @@ void ForkController::OnInitialize(const YAML::Node &config) {
       reader.Get<std::string>("fork_goal_topic", "fork/goal_height");
   std::string pose_topic =
       reader.Get<std::string>("fork_pose_topic", "fork/pose");
-  std::string completed_topic = reader.Get<std::string>(
-      "fork_goal_completed_topic", "fork/goal_reached");
+  std::string completed_topic =
+      reader.Get<std::string>("fork_goal_completed_topic", "fork/goal_reached");
   std::string weight_topic =
       reader.Get<std::string>("weight_topic", "fork/weight");
   std::string contact_left_topic =
@@ -39,7 +39,8 @@ void ForkController::OnInitialize(const YAML::Node &config) {
       reader.Get<std::string>("collision_right_topic", "fork/collision_right");
   std::string load_state_topic =
       reader.Get<std::string>("load_state_topic", "fork/loaded");
-  pose_frame_ = GetModel()->NameSpaceTF(reader.Get<std::string>("pose_frame", "base_link"));
+  pose_frame_ = GetModel()->NameSpaceTF(
+      reader.Get<std::string>("pose_frame", "base_link"));
 
   goal_tolerance_ = reader.Get<double>("goal_tolerance", 0.02);
   contact_range_ = reader.Get<double>("contact_range", 0.2);
@@ -54,22 +55,21 @@ void ForkController::OnInitialize(const YAML::Node &config) {
   goal_sub_ = nh_->create_subscription<std_msgs::msg::Float32>(
       goal_topic, 1,
       std::bind(&ForkController::OnForkGoal, this, std::placeholders::_1));
-  pose_pub_ = nh_->create_publisher<geometry_msgs::msg::PoseStamped>(
-      pose_topic, 1);
-  completed_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      completed_topic, 1);
-  weight_pub_ = nh_->create_publisher<std_msgs::msg::Float64>(
-      weight_topic, 1);
-  contact_left_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      contact_left_topic, 1);
-  contact_right_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      contact_right_topic, 1);
-  collision_left_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      collision_left_topic, 1);
-  collision_right_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      collision_right_topic, 1);
-  load_state_pub_ = nh_->create_publisher<std_msgs::msg::Bool>(
-      load_state_topic, 1);
+  pose_pub_ =
+      nh_->create_publisher<geometry_msgs::msg::PoseStamped>(pose_topic, 1);
+  completed_pub_ =
+      nh_->create_publisher<std_msgs::msg::Bool>(completed_topic, 1);
+  weight_pub_ = nh_->create_publisher<std_msgs::msg::Float64>(weight_topic, 1);
+  contact_left_pub_ =
+      nh_->create_publisher<std_msgs::msg::Bool>(contact_left_topic, 1);
+  contact_right_pub_ =
+      nh_->create_publisher<std_msgs::msg::Bool>(contact_right_topic, 1);
+  collision_left_pub_ =
+      nh_->create_publisher<std_msgs::msg::Bool>(collision_left_topic, 1);
+  collision_right_pub_ =
+      nh_->create_publisher<std_msgs::msg::Bool>(collision_right_topic, 1);
+  load_state_pub_ =
+      nh_->create_publisher<std_msgs::msg::Bool>(load_state_topic, 1);
 
   update_timer_.SetRate(update_rate_);
 
@@ -110,8 +110,8 @@ void ForkController::OnForkGoal(const std_msgs::msg::Float32::SharedPtr msg) {
   Forklift *forklift = GetForklift();
   if (!forklift) return;
 
-  double goal = std::max(0.0, std::min<double>(msg->data,
-                                               forklift->lift_height_));
+  double goal =
+      std::max(0.0, std::min<double>(msg->data, forklift->lift_height_));
   if ((double)msg->data != goal) {
     RCLCPP_WARN(rclcpp::get_logger("ForkController"),
                 "fork goal %.3f m outside [0, %.3f], clamped to %.3f",
@@ -179,7 +179,8 @@ void ForkController::BeforePhysicsStep(const Timekeeper &timekeeper) {
 
   // Before the first command, the controller is already at its goal.
   std_msgs::msg::Bool completed;
-  completed.data = !has_goal_ || std::fabs(elevation - goal_z_) <= goal_tolerance_;
+  completed.data =
+      !has_goal_ || std::fabs(elevation - goal_z_) <= goal_tolerance_;
   completed_pub_->publish(completed);
 
   std_msgs::msg::Float64 weight;

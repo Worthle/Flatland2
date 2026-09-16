@@ -46,12 +46,12 @@
 
 #include "flatland_server/debug_visualization.h"
 #include <Box2D/Box2D.h>
-#include <rclcpp/rclcpp.hpp>
 #include <tf2/LinearMath/Quaternion.h>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <cmath>
 #include <map>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace flatland_server {
 
@@ -69,13 +69,13 @@ DebugVisualization& DebugVisualization::Get() {
 }
 
 void DebugVisualization::JointToMarkers(
-    visualization_msgs::msg::MarkerArray& markers, b2Joint* joint, float r, float g,
-    float b, float a) {
+    visualization_msgs::msg::MarkerArray& markers, b2Joint* joint, float r,
+    float g, float b, float a) {
   if (joint->GetType() == e_distanceJoint ||
       joint->GetType() == e_pulleyJoint || joint->GetType() == e_mouseJoint) {
     RCLCPP_ERROR(rclcpp::get_logger("DebugVis"),
-                    "Unimplemented visualization joints. See b2World.cpp for "
-                    "implementation");
+                 "Unimplemented visualization joints. See b2World.cpp for "
+                 "implementation");
     return;
   }
 
@@ -127,14 +127,18 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
   auto& wheel = body.wheel_visual_;
   auto* physics = body.physics_body_;
   const double radius = wheel.radius, width = wheel.width;
-  const b2Vec2 center = physics->GetWorldPoint(b2Vec2(wheel.center.x, wheel.center.y));
+  const b2Vec2 center =
+      physics->GetWorldPoint(b2Vec2(wheel.center.x, wheel.center.y));
   const double heading = physics->GetAngle();
   if (wheel.initialized) {
-    const double middle = wheel.last_heading +
+    const double middle =
+        wheel.last_heading +
         0.5 * std::remainder(heading - wheel.last_heading, 2.0 * M_PI);
     const b2Vec2 travel = center - wheel.last_position;
-    wheel.rotation = std::remainder(wheel.rotation +
-        (travel.x * std::cos(middle) + travel.y * std::sin(middle)) / radius,
+    wheel.rotation = std::remainder(
+        wheel.rotation +
+            (travel.x * std::cos(middle) + travel.y * std::sin(middle)) /
+                radius,
         2.0 * M_PI);
   }
   wheel.last_position = center;
@@ -142,7 +146,8 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
   wheel.initialized = true;
 
   tf2::Quaternion axle, roll;
-  axle.setRPY(-M_PI / 2.0, 0, heading);  // Cylinder Z axis becomes the wheel axle (+Y).
+  axle.setRPY(-M_PI / 2.0, 0,
+              heading);  // Cylinder Z axis becomes the wheel axle (+Y).
   roll.setRPY(0, 0, wheel.rotation);
   Marker base;
   base.header.frame_id = "map";
@@ -157,13 +162,15 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
     marker.ns = "wheel/" + body.name_ + "/" + part;
     markers.markers.push_back(std::move(marker));
   };
-  auto cylinder = [&](const std::string& part, double r, double w,
-                      float red, float green, float blue) {
+  auto cylinder = [&](const std::string& part, double r, double w, float red,
+                      float green, float blue) {
     Marker marker = base;
     marker.type = Marker::CYLINDER;
     marker.scale.x = marker.scale.y = 2.0 * r;
     marker.scale.z = w;
-    marker.color.r = red; marker.color.g = green; marker.color.b = blue;
+    marker.color.r = red;
+    marker.color.g = green;
+    marker.color.b = blue;
     add(marker, part);
   };
   cylinder("tire", radius, width, 0.055f, 0.065f, 0.075f);
@@ -172,12 +179,18 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
   cylinder("hub", radius * 0.20, width * 1.15, 0.76f, 0.80f, 0.84f);
 
   auto point = [](double x, double y, double z) {
-    geometry_msgs::msg::Point p; p.x = x; p.y = y; p.z = z; return p;
+    geometry_msgs::msg::Point p;
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    return p;
   };
   Marker spokes = base;
   spokes.type = Marker::LINE_LIST;
   spokes.scale.x = radius * 0.065;
-  spokes.color.r = 0.70f; spokes.color.g = 0.75f; spokes.color.b = 0.80f;
+  spokes.color.r = 0.70f;
+  spokes.color.g = 0.75f;
+  spokes.color.b = 0.80f;
   for (double side : {-1.0, 1.0}) {
     for (int i = 0; i < 6; ++i) {
       const double angle = i * M_PI / 3.0;
@@ -192,7 +205,9 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
   Marker tread = base;
   tread.type = Marker::LINE_LIST;
   tread.scale.x = radius * 0.025;
-  tread.color.r = 0.13f; tread.color.g = 0.15f; tread.color.b = 0.17f;
+  tread.color.r = 0.13f;
+  tread.color.g = 0.15f;
+  tread.color.b = 0.17f;
   for (int i = 0; i < 16; ++i) {
     const double angle = i * M_PI / 8.0;
     const double x = radius * 1.005 * std::cos(angle);
@@ -213,11 +228,13 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
     bracket.pose.position.x = physics->GetPosition().x;
     bracket.pose.position.y = physics->GetPosition().y;
     bracket.pose.position.z = body.elevation_ + body.visual_z_offset_;
-    tf2::Quaternion yaw; yaw.setRPY(0, 0, heading);
+    tf2::Quaternion yaw;
+    yaw.setRPY(0, 0, heading);
     bracket.pose.orientation = tf2::toMsg(yaw);
     for (double side : {-1.0, 1.0}) {
       bracket.points.push_back(point(0, side * width * 0.68, radius * 2.15));
-      bracket.points.push_back(point(wheel.center.x, wheel.center.y + side * width * 0.68, radius));
+      bracket.points.push_back(
+          point(wheel.center.x, wheel.center.y + side * width * 0.68, radius));
     }
     bracket.points.push_back(point(0, -width * 0.68, radius * 2.15));
     bracket.points.push_back(point(0, width * 0.68, radius * 2.15));
@@ -226,9 +243,9 @@ void WheelToMarkers(visualization_msgs::msg::MarkerArray& markers, Body& body) {
 }
 }  // namespace
 
-void DebugVisualization::BodyToMarkers(visualization_msgs::msg::MarkerArray& markers,
-                                       b2Body* body, float r, float g, float b,
-                                       float a) {
+void DebugVisualization::BodyToMarkers(
+    visualization_msgs::msg::MarkerArray& markers, b2Body* body, float r,
+    float g, float b, float a) {
   b2Fixture* fixture = body->GetFixtureList();
 
   // The flatland Body (if any) is stored as the Box2D body user data. It
@@ -258,7 +275,8 @@ void DebugVisualization::BodyToMarkers(visualization_msgs::msg::MarkerArray& mar
     WheelToMarkers(markers, *fl_body);
     return;
   }
-  double elevation = fl_body ? fl_body->elevation_ + fl_body->visual_z_offset_ : 0.0;
+  double elevation =
+      fl_body ? fl_body->elevation_ + fl_body->visual_z_offset_ : 0.0;
   double extrude_height = fl_body ? fl_body->extrude_height_ : 0.0;
   // Fall back to the global default extrusion for bodies that don't set their
   // own, so all polygon bodies render as 3D boxes when a default is configured.
@@ -300,8 +318,10 @@ void DebugVisualization::BodyToMarkers(visualization_msgs::msg::MarkerArray& mar
       // Bottom and top faces (triangle fans from vertex 0)
       for (int i = 1; i < n - 1; i++) {
         // bottom (z = 0)
-        marker.points.push_back(pt(poly->m_vertices[0].x, poly->m_vertices[0].y, 0));
-        marker.points.push_back(pt(poly->m_vertices[i].x, poly->m_vertices[i].y, 0));
+        marker.points.push_back(
+            pt(poly->m_vertices[0].x, poly->m_vertices[0].y, 0));
+        marker.points.push_back(
+            pt(poly->m_vertices[i].x, poly->m_vertices[i].y, 0));
         marker.points.push_back(
             pt(poly->m_vertices[i + 1].x, poly->m_vertices[i + 1].y, 0));
         // top (z = extrude_height)
@@ -363,7 +383,7 @@ void DebugVisualization::BodyToMarkers(visualization_msgs::msg::MarkerArray& mar
 
       } break;
 
-      case b2Shape::e_edge: {    // Convert b2Edge -> LINE_LIST
+      case b2Shape::e_edge: {         // Convert b2Edge -> LINE_LIST
         geometry_msgs::msg::Point p;  // b2Edge uses vertex1 and 2 for its edges
         b2EdgeShape* edge = (b2EdgeShape*)fixture->GetShape();
 
@@ -394,15 +414,14 @@ void DebugVisualization::BodyToMarkers(visualization_msgs::msg::MarkerArray& mar
       } break;
 
       case b2Shape::e_chain: {
-
         geometry_msgs::msg::Point p;  // b2Edge uses vertex1 and 2 for its edges
         b2ChainShape* chain = (b2ChainShape*)fixture->GetShape();
 
-        add_marker = true;  
+        add_marker = true;
         marker.type = marker.LINE_STRIP;
         marker.scale.x = 0.03;  // 3cm wide lines
-        
-        for(int i=0; i<chain->m_count; i++) {
+
+        for (int i = 0; i < chain->m_count; i++) {
           p.x = chain->m_vertices[i].x;
           p.y = chain->m_vertices[i].y;
           marker.points.push_back(p);
@@ -415,10 +434,9 @@ void DebugVisualization::BodyToMarkers(visualization_msgs::msg::MarkerArray& mar
       } break;
 
       default:  // Unsupported shape
-        RCLCPP_WARN_THROTTLE(rclcpp::get_logger("DebugVis"),
-                             *ros_node()->get_clock(), 1000,
-                             "Unsupported Box2D shape %d",
-                             static_cast<int>(fixture->GetType()));
+        RCLCPP_WARN_THROTTLE(
+            rclcpp::get_logger("DebugVis"), *ros_node()->get_clock(), 1000,
+            "Unsupported Box2D shape %d", static_cast<int>(fixture->GetType()));
         fixture = fixture->GetNext();
         continue;  // Do not add broken marker
         break;
@@ -457,7 +475,8 @@ void DebugVisualization::Publish(const Timekeeper& timekeeper) {
 
   if (to_delete.size() > 0) {
     for (const auto& topic : to_delete) {
-      RCLCPP_WARN(rclcpp::get_logger("DebugVis"), "Deleting topic %s", topic.c_str());
+      RCLCPP_WARN(rclcpp::get_logger("DebugVis"), "Deleting topic %s",
+                  topic.c_str());
       topics_.erase(topic);
     }
     PublishTopicList();
@@ -560,7 +579,8 @@ void DebugVisualization::Reset(std::string name) {
 void DebugVisualization::AddTopicIfNotExist(const std::string& name) {
   // If the topic doesn't exist yet, create it
   if (topics_.count(name) == 0) {
-    rclcpp::QoS latched_qos = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
+    rclcpp::QoS latched_qos =
+        rclcpp::QoS(rclcpp::KeepLast(1)).transient_local();
     topics_[name] = {
         node_->create_publisher<visualization_msgs::msg::MarkerArray>(
             "/flatland_server/debug/" + name, latched_qos),

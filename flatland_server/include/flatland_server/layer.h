@@ -144,7 +144,7 @@ class Layer : public Entity {
    * @brief Return the type of entity
    * @return type indicating it is a layer
    */
-  EntityType Type() const { return EntityType::LAYER; }
+  EntityType Type() const override { return EntityType::LAYER; }
 
   /**
    * @brief Load the map by extracting edges from images

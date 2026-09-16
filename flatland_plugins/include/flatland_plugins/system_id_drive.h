@@ -26,21 +26,21 @@ namespace flatland_plugins {
 
 class SystemIdDrive : public ModelPlugin {
  public:
-  Body *body_;                ///< body driven by the identified model
-  NarxCoupledModel model_;    ///< the identified NARX model (coupled free-run)
-  std::string linear_output_;   ///< model output used as body v [m/s]
+  Body *body_;                 ///< body driven by the identified model
+  NarxCoupledModel model_;     ///< the identified NARX model (coupled free-run)
+  std::string linear_output_;  ///< model output used as body v [m/s]
   std::string angular_output_;  ///< model output used as body w [rad/s]
   int linear_index_ = -1;       ///< index of linear_output_ in Step() result
   int angular_index_ = -1;      ///< index of angular_output_ in Step() result
   std::vector<int> command_fields_;  ///< per model command: message field id
 
-  double cmd_timeout_;   ///< [s] without a command -> feed zeros (0 = hold)
-  double v_hat_ = 0.0;   ///< latest predicted linear velocity
-  double w_hat_ = 0.0;   ///< latest predicted angular velocity
+  double cmd_timeout_;  ///< [s] without a command -> feed zeros (0 = hold)
+  double v_hat_ = 0.0;  ///< latest predicted linear velocity
+  double w_hat_ = 0.0;  ///< latest predicted angular velocity
 
-  double cmd_speed_ = 0.0;     ///< latest received command: drive.speed
-  double cmd_steering_ = 0.0;  ///< latest received command: steering_angle
-  bool cmd_received_ = false;  ///< a new command arrived since the last step
+  double cmd_speed_ = 0.0;        ///< latest received command: drive.speed
+  double cmd_steering_ = 0.0;     ///< latest received command: steering_angle
+  bool cmd_received_ = false;     ///< a new command arrived since the last step
   double last_cmd_sim_s_ = -1.0;  ///< sim time [s] of last command, -1 = none
 
   UpdateTimer model_timer_;  ///< NARX tick at the model's sample rate

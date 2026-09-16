@@ -8,10 +8,10 @@
 #include <flatland_server/exceptions.h>
 #include <flatland_server/yaml_reader.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <pluginlib/class_list_macros.hpp>
 #include <boost/algorithm/string/join.hpp>
 #include <cmath>
 #include <limits>
+#include <pluginlib/class_list_macros.hpp>
 #include <set>
 
 using namespace flatland_server;
@@ -117,8 +117,10 @@ void MockDetection::BeforePhysicsStep(const Timekeeper &timekeeper) {
     // target pose (model origin shifted by pose_offset in the target frame)
     double target_yaw = b2body->GetAngle();
     double off_c = cos(target_yaw), off_s = sin(target_yaw);
-    double target_x = target_pos.x + off_c * pose_offset_.x - off_s * pose_offset_.y;
-    double target_y = target_pos.y + off_s * pose_offset_.x + off_c * pose_offset_.y;
+    double target_x =
+        target_pos.x + off_c * pose_offset_.x - off_s * pose_offset_.y;
+    double target_y =
+        target_pos.y + off_s * pose_offset_.x + off_c * pose_offset_.y;
 
     // express in the camera frame and apply the detection noise
     double rel_x = target_x - cam_x;
@@ -143,8 +145,7 @@ void MockDetection::BeforePhysicsStep(const Timekeeper &timekeeper) {
     // re-expressed in the world frame so it stays put when the target is no
     // longer seen (instead of riding the robot in the stale camera frame)
     if (broadcast_target_tf_) {
-      geometry_msgs::msg::TransformStamped &anchor =
-          anchored_tfs_[model_name];
+      geometry_msgs::msg::TransformStamped &anchor = anchored_tfs_[model_name];
       anchor.header.frame_id = world_frame_;
       anchor.child_frame_id = flatland_plugins::resolveTf(
           "", GetModel()->NameSpaceTF(target_frame_prefix_ + model_name));

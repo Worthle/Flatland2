@@ -49,9 +49,8 @@
 #include <flatland_server/exceptions.h>
 #include <flatland_server/geometry.h>
 #include <flatland_server/layer.h>
-#include <flatland_server/yaml_reader.h>
 #include <flatland_server/ros_node.h>
-#include <rclcpp/rclcpp.hpp>
+#include <flatland_server/yaml_reader.h>
 #include <yaml-cpp/yaml.h>
 #include <boost/algorithm/string/join.hpp>
 #include <boost/filesystem.hpp>
@@ -59,6 +58,7 @@
 #include <iostream>
 #include <memory>
 #include <opencv2/opencv.hpp>
+#include <rclcpp/rclcpp.hpp>
 #if CV_MAJOR_VERSION < 3
 #define GREYSCALE CV_LOAD_IMAGE_GRAYSCALE
 #else
@@ -144,8 +144,8 @@ Layer *Layer::MakeLayer(b2World *physics_world, CollisionFilterRegistry *cfr,
       }
 
       RCLCPP_INFO(rclcpp::get_logger("Layer"),
-                     "layer \"%s\" loading line segments from path=\"%s\"",
-                     names[0].c_str(), data_path.string().c_str());
+                  "layer \"%s\" loading line segments from path=\"%s\"",
+                  names[0].c_str(), data_path.string().c_str());
 
       std::vector<LineSegment> line_segments;
 
@@ -165,8 +165,9 @@ Layer *Layer::MakeLayer(b2World *physics_world, CollisionFilterRegistry *cfr,
             boost::filesystem::path(map_path).parent_path() / image_path;
       }
 
-      RCLCPP_INFO(rclcpp::get_logger("Layer"), "layer \"%s\" loading image from path=\"%s\"",
-                     names[0].c_str(), image_path.string().c_str());
+      RCLCPP_INFO(rclcpp::get_logger("Layer"),
+                  "layer \"%s\" loading image from path=\"%s\"",
+                  names[0].c_str(), image_path.string().c_str());
 
       cv::Mat map = cv::imread(image_path.string(), GREYSCALE);
       if (map.empty()) {
@@ -223,14 +224,14 @@ void Layer::LoadFromBitmap(const cv::Mat &bitmap, double occupied_thresh,
 
   uint32_t edges_added = 0;
 
-  auto add_poly = [&](std::vector<cv::Point2f>& poly) {
+  auto add_poly = [&](std::vector<cv::Point2f> &poly) {
     b2ChainShape polygon_chain;
     double rows = bitmap.rows;
     double res = resolution;
 
     std::vector<b2Vec2> poly_b2;
     poly_b2.reserve(poly.size());
-    for(auto& p : poly) {
+    for (auto &p : poly) {
       poly_b2.emplace_back(res * p.x, res * (rows - p.y));
     }
 
@@ -249,9 +250,10 @@ void Layer::LoadFromBitmap(const cv::Mat &bitmap, double occupied_thresh,
 
   // thresholds the map, values between the occupied threshold and 1.0 are
   // considered to be occupied
-  cv::inRange(bitmap, occupied_thresh, 1.0, obstacle_map); 
+  cv::inRange(bitmap, occupied_thresh, 1.0, obstacle_map);
 
-  // simplify_map rosparam: 0=None, 1=moderate, 2=maximum simplification of map polygon outlines
+  // simplify_map rosparam: 0=None, 1=moderate, 2=maximum simplification of map
+  // polygon outlines
   int simplify = 0;
   {
     auto node = ros_node();
@@ -260,35 +262,40 @@ void Layer::LoadFromBitmap(const cv::Mat &bitmap, double occupied_thresh,
     }
     simplify = node->get_parameter("simplify_map").as_int();
   }
-  
+
   std::vector<std::vector<cv::Point>> vectors_outline;
   cv::Mat obstacle_map_open;
   if (simplify >= 2) {
     int open_kernel_size = 3;  // 0.15m at 5cm pixel resolution
-    cv::Mat kernel = cv::getStructuringElement( cv::MORPH_ELLIPSE, {open_kernel_size*2+1, open_kernel_size*2+1});
-    cv::morphologyEx(obstacle_map, obstacle_map_open, cv::MORPH_OPEN, kernel); 
+    cv::Mat kernel = cv::getStructuringElement(
+        cv::MORPH_ELLIPSE,
+        {open_kernel_size * 2 + 1, open_kernel_size * 2 + 1});
+    cv::morphologyEx(obstacle_map, obstacle_map_open, cv::MORPH_OPEN, kernel);
   } else {
     obstacle_map_open = obstacle_map.clone();
   }
 
-  cv::findContours(obstacle_map_open, vectors_outline, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
-  for (auto& polygon : vectors_outline) {
-    std::vector<cv::Point2f> polygon2f;  // create a double rep. for RDP accuracy
-    std::transform(polygon.begin(), polygon.end(), std::back_inserter(polygon2f),
-               [](const cv::Point& p) { return (cv::Point2f)p; });
-    std::vector<cv::Point2f>& poly_to_use = polygon2f;
+  cv::findContours(obstacle_map_open, vectors_outline, cv::RETR_LIST,
+                   cv::CHAIN_APPROX_SIMPLE);
+  for (auto &polygon : vectors_outline) {
+    std::vector<cv::Point2f>
+        polygon2f;  // create a double rep. for RDP accuracy
+    std::transform(polygon.begin(), polygon.end(),
+                   std::back_inserter(polygon2f),
+                   [](const cv::Point &p) { return (cv::Point2f)p; });
+    std::vector<cv::Point2f> &poly_to_use = polygon2f;
 
-    
     if (simplify >= 1) {
       std::vector<cv::Point2f> polygon_rdp;
       cv::approxPolyDP(polygon2f, polygon_rdp, 1.0, true);  // RDP reduction
-      if (polygon_rdp.size()>4) poly_to_use = polygon_rdp;
+      if (polygon_rdp.size() > 4) poly_to_use = polygon_rdp;
     }
 
     add_poly(poly_to_use);
   }
 
-  RCLCPP_INFO(rclcpp::get_logger("Layer"), "added %d line segments", edges_added);
+  RCLCPP_INFO(rclcpp::get_logger("Layer"), "added %d line segments",
+              edges_added);
 }
 
 void Layer::DebugVisualize() const {
@@ -313,10 +320,10 @@ void Layer::DebugOutput() const {
   uint16_t category_bits = cfr_->GetCategoryBits(names_);
 
   RCLCPP_DEBUG(rclcpp::get_logger("Layer"),
-                  "Layer %p: physics_world(%p) name(%s) names(%s) "
-                  "category_bits(0x%X)",
-                  this, physics_world_, name_.c_str(), names.c_str(),
-                  category_bits);
+               "Layer %p: physics_world(%p) name(%s) names(%s) "
+               "category_bits(0x%X)",
+               this, physics_world_, name_.c_str(), names.c_str(),
+               category_bits);
 
   if (body_ != nullptr) {
     body_->DebugOutput();

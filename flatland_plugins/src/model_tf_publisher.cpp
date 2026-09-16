@@ -8,10 +8,10 @@
 #include <flatland_server/exceptions.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/yaml_reader.h>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <pluginlib/class_list_macros.hpp>
 #include <Eigen/Dense>
 #include <boost/algorithm/string/join.hpp>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <pluginlib/class_list_macros.hpp>
 
 using namespace flatland_server;
 
@@ -58,7 +58,8 @@ void ModelTfPublisher::OnInitialize(const YAML::Node &config) {
 
   update_timer_.SetRate(update_rate_);
 
-  RCLCPP_DEBUG(rclcpp::get_logger("ModelTfPublisher"),
+  RCLCPP_DEBUG(
+      rclcpp::get_logger("ModelTfPublisher"),
       "Initialized with params: reference(%s, %p) "
       "publish_tf_world(%d) world_frame_id(%s) update_rate(%f), exclude({%s})",
       reference_body_->name_.c_str(), reference_body_, publish_tf_world_,
@@ -112,13 +113,14 @@ void ModelTfPublisher::BeforePhysicsStep(const Timekeeper &timekeeper) {
     double yaw = atan2(sine, cosine);
 
     // publish TF
-    tf_stamped.header.frame_id =
-        flatland_plugins::resolveTf("", GetModel()->NameSpaceTF(reference_body_->name_));
+    tf_stamped.header.frame_id = flatland_plugins::resolveTf(
+        "", GetModel()->NameSpaceTF(reference_body_->name_));
     tf_stamped.child_frame_id =
         flatland_plugins::resolveTf("", GetModel()->NameSpaceTF(body->name_));
     tf_stamped.transform.translation.x = rel_tf(0, 2);
     tf_stamped.transform.translation.y = rel_tf(1, 2);
-    tf_stamped.transform.translation.z = body->elevation_ - reference_body_->elevation_;
+    tf_stamped.transform.translation.z =
+        body->elevation_ - reference_body_->elevation_;
     tf2::Quaternion q;
     q.setRPY(0, 0, yaw);
     tf_stamped.transform.rotation.x = q.x();
@@ -135,8 +137,8 @@ void ModelTfPublisher::BeforePhysicsStep(const Timekeeper &timekeeper) {
     double yaw = reference_body_->physics_body_->GetAngle();
 
     tf_stamped.header.frame_id = world_frame_id_;
-    tf_stamped.child_frame_id =
-        flatland_plugins::resolveTf("", GetModel()->NameSpaceTF(reference_body_->name_));
+    tf_stamped.child_frame_id = flatland_plugins::resolveTf(
+        "", GetModel()->NameSpaceTF(reference_body_->name_));
     tf_stamped.transform.translation.x = p.x;
     tf_stamped.transform.translation.y = p.y;
     tf_stamped.transform.translation.z = reference_body_->elevation_;

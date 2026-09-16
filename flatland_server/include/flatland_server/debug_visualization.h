@@ -48,13 +48,13 @@
 #define FLATLAND_SERVER_DEBUG_VISUALIZATION_H
 
 #include <Box2D/Box2D.h>
-#include <flatland_msgs/msg/debug_topic_list.hpp>
 #include <flatland_server/ros_node.h>
-#include <rclcpp/rclcpp.hpp>
-#include <visualization_msgs/msg/marker_array.hpp>
+#include <flatland_msgs/msg/debug_topic_list.hpp>
 #include <map>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 #include <vector>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include "flatland_server/body.h"
 #include "flatland_server/timekeeper.h"
@@ -141,8 +141,8 @@ class DebugVisualization {
    * @param[in] b blue color 0.0->1.0
    * @param[in] a alpha color 0.0->1.0
    */
-  void BodyToMarkers(visualization_msgs::msg::MarkerArray& markers, b2Body* body,
-                     float r, float g, float b, float a);
+  void BodyToMarkers(visualization_msgs::msg::MarkerArray& markers,
+                     b2Body* body, float r, float g, float b, float a);
 
   /**
    * @brief Append a joint as a marker on the marker array
@@ -153,8 +153,8 @@ class DebugVisualization {
    * @param[in] b blue color 0.0->1.0
    * @param[in] a alpha color 0.0->1.0
    */
-  void JointToMarkers(visualization_msgs::msg::MarkerArray& markers, b2Joint* joint,
-                      float r, float g, float b, float a);
+  void JointToMarkers(visualization_msgs::msg::MarkerArray& markers,
+                      b2Joint* joint, float r, float g, float b, float a);
 
   /**
    * @brief Ensure that a topic name is being broadcasted

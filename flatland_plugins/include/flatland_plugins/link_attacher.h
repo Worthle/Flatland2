@@ -6,11 +6,11 @@
 #define FLATLAND_PLUGINS_LINK_ATTACHER_H
 
 #include <Box2D/Box2D.h>
-#include <flatland_msgs/srv/attach.hpp>
 #include <flatland_plugins/update_timer.h>
 #include <flatland_server/model.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/types.h>
+#include <flatland_msgs/srv/attach.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <std_msgs/msg/string.hpp>
 #include <std_srvs/srv/trigger.hpp>
@@ -37,11 +37,11 @@ namespace flatland_plugins {
  */
 class LinkAttacher : public ModelPlugin {
  public:
-  Body *attach_body_;             ///< body the weld joint anchors to
-  Body *elevation_source_body_;   ///< fork body carried models copy, or null
+  Body *attach_body_;            ///< body the weld joint anchors to
+  Body *elevation_source_body_;  ///< fork body carried models copy, or null
   std::vector<std::string> model_prefixes_;  ///< attachable model prefixes
-  b2Vec2 capture_point_;   ///< auto-select reference point (body frame)
-  double capture_range_;   ///< max distance from capture point to target
+  b2Vec2 capture_point_;  ///< auto-select reference point (body frame)
+  double capture_range_;  ///< max distance from capture point to target
   double carry_elevation_offset_;  ///< added to the copied fork elevation
   double drop_speed_;   ///< settle speed (m/s) of a detached lifted model
   double update_rate_;  ///< rate to publish the attached state at
@@ -107,8 +107,7 @@ class LinkAttacher : public ModelPlugin {
    * @param[out] distance distance (m) from the capture point, when found
    * @return the selected model, or nullptr
    */
-  Model *FindNearestCandidate(std::string &message,
-                              double *distance = nullptr);
+  Model *FindNearestCandidate(std::string &message, double *distance = nullptr);
 
  private:
   /**
@@ -118,11 +117,11 @@ class LinkAttacher : public ModelPlugin {
    */
   Model *FindModelByName(const std::string &name);
 
- /**
-   * @brief Set the collision group on every fixture of every body of a model
-   * @param[in] model the model to refilter
-   * @param[in] group the b2 group index to apply (0 restores the default)
-   */
+  /**
+    * @brief Set the collision group on every fixture of every body of a model
+    * @param[in] model the model to refilter
+    * @param[in] group the b2 group index to apply (0 restores the default)
+    */
   void SetCollisionGroup(Model *model, int group);
 
   /**

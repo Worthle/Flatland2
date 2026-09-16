@@ -15,11 +15,14 @@ inline std::string ResolveAssetPath(const std::string &path) {
   const std::string prefix = "package://";
   if (path.compare(0, prefix.size(), prefix) != 0) return path;
   const auto separator = path.find('/', prefix.size());
-  if (separator == std::string::npos || separator == prefix.size() || separator + 1 == path.size()) {
-    throw std::invalid_argument("Asset URI must have the form package://package/path");
+  if (separator == std::string::npos || separator == prefix.size() ||
+      separator + 1 == path.size()) {
+    throw std::invalid_argument(
+        "Asset URI must have the form package://package/path");
   }
   return ament_index_cpp::get_package_share_directory(
-      path.substr(prefix.size(), separator - prefix.size())) + path.substr(separator);
+             path.substr(prefix.size(), separator - prefix.size())) +
+         path.substr(separator);
 }
 
 }  // namespace flatland_plugins

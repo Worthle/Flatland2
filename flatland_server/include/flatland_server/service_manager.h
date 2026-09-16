@@ -44,11 +44,11 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <flatland_server/simulation_manager.h>
+#include <flatland_server/world.h>
 #include <flatland_msgs/srv/delete_model.hpp>
 #include <flatland_msgs/srv/move_model.hpp>
 #include <flatland_msgs/srv/spawn_model.hpp>
-#include <flatland_server/simulation_manager.h>
-#include <flatland_server/world.h>
 #include <rclcpp/rclcpp.hpp>
 #include <std_srvs/srv/empty.hpp>
 
@@ -108,7 +108,6 @@ class ServiceManager {
   void MoveModel(
       const std::shared_ptr<flatland_msgs::srv::MoveModel::Request> request,
       std::shared_ptr<flatland_msgs::srv::MoveModel::Response> response);
-
 
   /**
    * @brief Callback for the pause service

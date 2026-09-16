@@ -3,13 +3,13 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Full license notices: LICENSE.
 
+#include <flatland_plugins/asset_path.h>
 #include <flatland_plugins/ros2_compat.h>
 #include <flatland_plugins/system_id_drive.h>
-#include <flatland_plugins/asset_path.h>
 #include <flatland_server/exceptions.h>
 #include <flatland_server/yaml_reader.h>
-#include <pluginlib/class_list_macros.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <pluginlib/class_list_macros.hpp>
 
 #include <cmath>
 #include <limits>
@@ -26,12 +26,10 @@ void SystemIdDrive::OnInitialize(const YAML::Node &config) {
 
   std::string body_name = r.Get<std::string>("body");
   std::string model_path = ResolveAssetPath(r.Get<std::string>("model_path"));
-  std::string command_sub =
-      r.Get<std::string>("command_sub", "ackermann_cmd");
+  std::string command_sub = r.Get<std::string>("command_sub", "ackermann_cmd");
   std::string command_mapping =
       r.Get<std::string>("command_mapping", "ackermann");
-  linear_output_ =
-      r.Get<std::string>("linear_output", "meas_linear_velocity");
+  linear_output_ = r.Get<std::string>("linear_output", "meas_linear_velocity");
   angular_output_ =
       r.Get<std::string>("angular_output", "meas_angular_velocity");
   cmd_timeout_ = r.Get<double>("cmd_timeout", 0.5);
@@ -86,11 +84,10 @@ void SystemIdDrive::OnInitialize(const YAML::Node &config) {
     if (output_names[i] == angular_output_) angular_index_ = i;
   }
   if (linear_index_ < 0 || angular_index_ < 0) {
-    throw YAMLException(
-        "SystemIdDrive: model outputs {" +
-        boost::algorithm::join(output_names, ",") +
-        "} do not include linear_output \"" + linear_output_ +
-        "\" and angular_output \"" + angular_output_ + "\"");
+    throw YAMLException("SystemIdDrive: model outputs {" +
+                        boost::algorithm::join(output_names, ",") +
+                        "} do not include linear_output \"" + linear_output_ +
+                        "\" and angular_output \"" + angular_output_ + "\"");
   }
 
   // resolve every model command input through the configured message mapping
@@ -104,18 +101,19 @@ void SystemIdDrive::OnInitialize(const YAML::Node &config) {
     } else if (name == "cmd_steering_angle") {
       command_fields_.push_back(FIELD_STEERING_ANGLE);
     } else {
-      throw YAMLException(
-          "SystemIdDrive: model command input \"" + name +
-          "\" is not provided by command_mapping \"ackermann\" "
-          "(supported inputs: cmd_speed, cmd_steering_angle)");
+      throw YAMLException("SystemIdDrive: model command input \"" + name +
+                          "\" is not provided by command_mapping \"ackermann\" "
+                          "(supported inputs: cmd_speed, cmd_steering_angle)");
     }
   }
 
   command_sub_ =
       nh_->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(
           command_sub, 1,
-          [this](const ackermann_msgs::msg::AckermannDriveStamped::SharedPtr
-                     msg) { CommandCallback(*msg); });
+          [this](
+              const ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg) {
+            CommandCallback(*msg);
+          });
   odom_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1);
   ground_truth_pub_ =
       nh_->create_publisher<nav_msgs::msg::Odometry>(ground_truth_topic, 1);
@@ -155,8 +153,7 @@ void SystemIdDrive::OnInitialize(const YAML::Node &config) {
       "{%s} @ %.1f Hz, commands {%s} from %s (mapping %s, cmd_timeout %.2f "
       "s), odom(%s) ground_truth(%s) pose(%s)",
       body_name.c_str(), model_path.c_str(), model_.SubModels().size(),
-      boost::algorithm::join(output_names, ",").c_str(),
-      model_.SampleRateHz(),
+      boost::algorithm::join(output_names, ",").c_str(), model_.SampleRateHz(),
       boost::algorithm::join(model_.CommandNames(), ",").c_str(),
       command_sub.c_str(), command_mapping.c_str(), cmd_timeout_,
       odom_topic.c_str(), ground_truth_topic.c_str(), pose_topic.c_str());
@@ -198,8 +195,8 @@ void SystemIdDrive::BeforePhysicsStep(const Timekeeper &timekeeper) {
     std::vector<double> commands(command_fields_.size(), 0.0);
     if (!use_zeros) {
       for (size_t i = 0; i < command_fields_.size(); ++i) {
-        commands[i] = command_fields_[i] == FIELD_SPEED ? cmd_speed_
-                                                        : cmd_steering_;
+        commands[i] =
+            command_fields_[i] == FIELD_SPEED ? cmd_speed_ : cmd_steering_;
       }
     }
     std::vector<double> outputs = model_.Step(commands);
@@ -209,8 +206,7 @@ void SystemIdDrive::BeforePhysicsStep(const Timekeeper &timekeeper) {
 
   // the identified model replaces the propulsion physics: write its
   // velocities onto the body every timestep (held between model ticks)
-  b2body->SetLinearVelocity(
-      b2Vec2(v_hat_ * cos(angle), v_hat_ * sin(angle)));
+  b2body->SetLinearVelocity(b2Vec2(v_hat_ * cos(angle), v_hat_ * sin(angle)));
   b2body->SetAngularVelocity(w_hat_);
 
   if (pub_timer_.CheckUpdate(timekeeper)) {
@@ -241,11 +237,14 @@ void SystemIdDrive::BeforePhysicsStep(const Timekeeper &timekeeper) {
     // Odometry starts at the spawn pose and uses its initial heading.
     const double dx = position.x - initial_position_.x;
     const double dy = position.y - initial_position_.y;
-    odom_msg_.pose.pose.position.x = cos(initial_angle_) * dx + sin(initial_angle_) * dy;
-    odom_msg_.pose.pose.position.y = -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.x =
+        cos(initial_angle_) * dx + sin(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.y =
+        -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
     ground_truth_msg_.pose.pose.position.x = position.x;
     ground_truth_msg_.pose.pose.position.y = position.y;
-    ground_truth_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    ground_truth_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
 
     odom_msg_.twist.twist = ground_truth_msg_.twist.twist;
     odom_msg_.pose.pose.position.x += noise_gen_[0](rng_);

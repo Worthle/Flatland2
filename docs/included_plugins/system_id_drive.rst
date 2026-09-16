@@ -117,6 +117,5 @@ This plugin does not publish odometry TF. Ground-truth pose is the actual
 world pose, but the published twist reports the model's predicted velocities,
 which can differ from realized motion during contact. There are no additional
 speed limits or stability checks for the learned dynamics. Validate a model's
-response before relying on it; the core ``narx_sim_tool`` and
-``tests/dynamics.py`` provide an independent offline replay check. The
-companion has a corresponding ``flatland_examples/tests/dynamics.py`` example.
+response before relying on it. Use ``ros2 run flatland_plugins narx_sim_tool``
+to replay command CSV files through the model offline.

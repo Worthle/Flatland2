@@ -65,7 +65,8 @@ class SimulationManager {
   double viz_pub_rate_;          ///< rate to publish visualization
   std::string world_yaml_file_;  ///< path to the world file
   Timekeeper timekeeper_;        ///< Timekeeper manager
-  uint64_t iterations_ = 0;      ///< Main loop iteration count (for debugging/profiling)
+  uint64_t iterations_ =
+      0;  ///< Main loop iteration count (for debugging/profiling)
 
   /**
    * @name  Simulation Manager constructor
@@ -81,9 +82,10 @@ class SimulationManager {
 
   /**
    * This method contains the loop that runs the simulation
-   * @param[in] benchmark optional, default false, ignore update timer (run as fast as possible)
+   * @param[in] benchmark optional, default false, ignore update timer (run as
+   * fast as possible)
    */
-  void Main(bool benchmark=false);
+  void Main(bool benchmark = false);
 
   /**
    * Kill the world

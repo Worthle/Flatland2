@@ -8,11 +8,11 @@
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/model_plugin.h>
 
+#include <tf2/utils.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <pluginlib/class_list_macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <algorithm>
@@ -56,13 +56,12 @@ void DiffDriveCaster::OnInitialize(const YAML::Node& config) {
 
   // --- Topic configuration ---
   std::string twist_topic = reader.Get<std::string>("twist_sub", "cmd_vel");
-  std::string odom_topic =
-      reader.Get<std::string>("odom_pub", "odom");
+  std::string odom_topic = reader.Get<std::string>("odom_pub", "odom");
   std::string ground_truth_topic =
       reader.Get<std::string>("ground_truth_pub", "ground_truth/odom");
   std::string twist_pub_topic = reader.Get<std::string>("twist_pub", "twist");
-  std::string pose_topic = reader.Get<std::string>(
-      "ground_truth_pose_pub", "ground_truth/pose");
+  std::string pose_topic =
+      reader.Get<std::string>("ground_truth_pose_pub", "ground_truth/pose");
 
   // --- Noise configuration ---
   std::vector<double> odom_twist_noise =
@@ -82,8 +81,10 @@ void DiffDriveCaster::OnInitialize(const YAML::Node& config) {
       reader.SubnodeOpt("linear_dynamics", YamlReader::MAP).Node());
 
   // --- Caster friction parameters ---
-  caster_lat_mu_ = reader.Get<double>("caster_lat_mu", 0.0);  // 0 = full lateral constraint
-  caster_long_mu_ = reader.Get<double>("caster_long_mu", 0.0); // 0 = no rolling resistance
+  caster_lat_mu_ =
+      reader.Get<double>("caster_lat_mu", 0.0);  // 0 = full lateral constraint
+  caster_long_mu_ =
+      reader.Get<double>("caster_long_mu", 0.0);  // 0 = no rolling resistance
   caster_alignment_rate_ = reader.Get<double>("caster_alignment_rate", 8.0);
   if (!std::isfinite(caster_alignment_rate_) || caster_alignment_rate_ <= 0.0) {
     throw YAMLException("caster_alignment_rate must be positive");
@@ -91,7 +92,8 @@ void DiffDriveCaster::OnInitialize(const YAML::Node& config) {
 
   // --- Parse casters configuration ---
   casters_.clear();
-  YAML::Node casters_node = reader.SubnodeOpt("casters", YamlReader::LIST).Node();
+  YAML::Node casters_node =
+      reader.SubnodeOpt("casters", YamlReader::LIST).Node();
   if (casters_node && casters_node.IsSequence()) {
     for (const auto& cn : casters_node) {
       YamlReader cr(cn);
@@ -117,10 +119,10 @@ void DiffDriveCaster::OnInitialize(const YAML::Node& config) {
   odom_twist_covar_default[7] = odom_twist_noise[1];
   odom_twist_covar_default[35] = odom_twist_noise[2];
 
-  auto odom_twist_covar = reader.GetArray<double, 36>(
-      "odom_twist_covariance", odom_twist_covar_default);
-  auto odom_pose_covar =
-      reader.GetArray<double, 36>("odom_pose_covariance", odom_pose_covar_default);
+  auto odom_twist_covar = reader.GetArray<double, 36>("odom_twist_covariance",
+                                                      odom_twist_covar_default);
+  auto odom_pose_covar = reader.GetArray<double, 36>("odom_pose_covariance",
+                                                     odom_pose_covar_default);
 
   reader.EnsureAccessedAllKeys();
 
@@ -140,20 +142,24 @@ void DiffDriveCaster::OnInitialize(const YAML::Node& config) {
   }
 
   // --- Set up ROS publishers and subscribers ---
-  twist_sub_ =
-      nh_->create_subscription<geometry_msgs::msg::Twist>(twist_topic, 1, [this](const geometry_msgs::msg::Twist::SharedPtr msg){ TwistCallback(*msg); });
+  twist_sub_ = nh_->create_subscription<geometry_msgs::msg::Twist>(
+      twist_topic, 1, [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
+        TwistCallback(*msg);
+      });
 
   if (enable_odom_pub_) {
     odom_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1);
     ground_truth_pub_ =
         nh_->create_publisher<nav_msgs::msg::Odometry>(ground_truth_topic, 1);
     ground_truth_pose_pub_ =
-        nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(pose_topic, 1);
+        nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            pose_topic, 1);
   }
 
   if (enable_twist_pub_) {
-    twist_pub_ = nh_->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
-        twist_pub_topic, 1);
+    twist_pub_ =
+        nh_->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+            twist_pub_topic, 1);
   }
 
   // --- Initialize messages ---
@@ -185,10 +191,10 @@ void DiffDriveCaster::OnInitialize(const YAML::Node& config) {
   }
 
   RCLCPP_INFO(rclcpp::get_logger("DiffDriveCaster"),
-                 "Initialized: body=%s, casters=%zu, caster_lat_mu=%.4f, "
-                 "caster_long_mu=%.4f",
-                 body_->name_.c_str(), casters_.size(),
-                 caster_lat_mu_, caster_long_mu_);
+              "Initialized: body=%s, casters=%zu, caster_lat_mu=%.4f, "
+              "caster_long_mu=%.4f",
+              body_->name_.c_str(), casters_.size(), caster_lat_mu_,
+              caster_long_mu_);
 }
 
 void DiffDriveCaster::BeforePhysicsStep(const Timekeeper& timekeeper) {
@@ -228,12 +234,13 @@ void DiffDriveCaster::BeforePhysicsStep(const Timekeeper& timekeeper) {
   // Each caster creates an impulse that:
   // - Removes lateral velocity component (perpendicular to caster heading)
   // - Keeps longitudinal velocity component (along caster heading)
-  // This simulates the constraint that casters can only roll, not slide sideways
-  
+  // This simulates the constraint that casters can only roll, not slide
+  // sideways
+
   if (!casters_.empty()) {
     float total_mass = b2body->GetMass();
     float total_inertia = b2body->GetInertia();
-    
+
     for (const auto& cc : casters_) {
       b2Body* caster_b2 = cc.body->physics_body_;
 
@@ -241,59 +248,67 @@ void DiffDriveCaster::BeforePhysicsStep(const Timekeeper& timekeeper) {
       b2Vec2 caster_forward = caster_b2->GetWorldVector(b2Vec2(1.0f, 0.0f));
       float len = caster_forward.Length();
       if (len > 1e-6f) caster_forward *= (1.0f / len);
-      
+
       // Lateral direction (perpendicular to caster forward)
       b2Vec2 caster_lateral(-caster_forward.y, caster_forward.x);
 
       // Contact point in world coordinates
       b2Vec2 contact_world = caster_b2->GetWorldPoint(cc.contact_offset);
-      
+
       // Get current velocity of base body at this contact point
       b2Vec2 v_contact = b2body->GetLinearVelocityFromWorldPoint(contact_world);
-      
+
       // Decompose into caster frame
-      float v_lat = b2Dot(caster_lateral, v_contact);  // Lateral (sliding) velocity
-      float v_long = b2Dot(caster_forward, v_contact); // Longitudinal (rolling) velocity
-      
+      float v_lat =
+          b2Dot(caster_lateral, v_contact);  // Lateral (sliding) velocity
+      float v_long =
+          b2Dot(caster_forward, v_contact);  // Longitudinal (rolling) velocity
+
       // Calculate impulse to reduce lateral velocity
-      // caster_lat_mu controls how much lateral slip is allowed (0 = full constraint, 1 = no constraint)
+      // caster_lat_mu controls how much lateral slip is allowed (0 = full
+      // constraint, 1 = no constraint)
       // At caster_lat_mu = 0, we remove 100% of lateral velocity
       // At caster_lat_mu = 1, we remove 0% of lateral velocity
       float lat_removal_factor = 1.0f - static_cast<float>(caster_lat_mu_);
       lat_removal_factor = ClampF(lat_removal_factor, 0.0f, 1.0f);
-      
-      float target_v_lat = v_lat * (1.0f - lat_removal_factor);  // Reduce lateral velocity
+
+      float target_v_lat =
+          v_lat * (1.0f - lat_removal_factor);   // Reduce lateral velocity
       float delta_v_lat = target_v_lat - v_lat;  // Change needed
-      
+
       // Similarly for longitudinal (rolling resistance)
       float long_removal_factor = static_cast<float>(caster_long_mu_);
       long_removal_factor = ClampF(long_removal_factor, 0.0f, 1.0f);
-      
+
       float target_v_long = v_long * (1.0f - long_removal_factor);
       float delta_v_long = target_v_long - v_long;
-      
+
       // Convert velocity change to impulse
       // For a rigid body: J = m * delta_v (for translation)
       // But we're applying at a contact point, so it also affects rotation
       // Use effective mass at contact point
       b2Vec2 r_contact = contact_world - b2body->GetWorldCenter();
-      
+
       // Effective mass for lateral direction
-      float r_cross_n = r_contact.x * caster_lateral.y - r_contact.y * caster_lateral.x;
-      float eff_mass_lat = 1.0f / (1.0f / total_mass + r_cross_n * r_cross_n / total_inertia);
-      
-      // Effective mass for longitudinal direction  
-      float r_cross_t = r_contact.x * caster_forward.y - r_contact.y * caster_forward.x;
-      float eff_mass_long = 1.0f / (1.0f / total_mass + r_cross_t * r_cross_t / total_inertia);
-      
+      float r_cross_n =
+          r_contact.x * caster_lateral.y - r_contact.y * caster_lateral.x;
+      float eff_mass_lat =
+          1.0f / (1.0f / total_mass + r_cross_n * r_cross_n / total_inertia);
+
+      // Effective mass for longitudinal direction
+      float r_cross_t =
+          r_contact.x * caster_forward.y - r_contact.y * caster_forward.x;
+      float eff_mass_long =
+          1.0f / (1.0f / total_mass + r_cross_t * r_cross_t / total_inertia);
+
       // Calculate impulses
       float J_lat = eff_mass_lat * delta_v_lat;
       float J_long = eff_mass_long * delta_v_long;
-      
+
       // Apply impulse to base body
       b2Vec2 impulse = J_lat * caster_lateral + J_long * caster_forward;
       b2body->ApplyLinearImpulse(impulse, contact_world, true);
-      
+
       // Rotate caster to trail BEHIND the motion direction.
       // For a trailing caster, the caster's forward (+X) should point
       // OPPOSITE to the velocity at the pivot.
@@ -301,14 +316,14 @@ void DiffDriveCaster::BeforePhysicsStep(const Timekeeper& timekeeper) {
       if (speed > 0.05f) {
         // Desired caster angle = direction opposite to velocity
         float desired_angle = atan2f(-v_contact.y, -v_contact.x);
-        
+
         // Compute shortest angular difference
         float current_angle = caster_b2->GetAngle();
         float angle_diff = desired_angle - current_angle;
         // Normalize to [-pi, pi]
         while (angle_diff > M_PI) angle_diff -= 2.0f * M_PI;
         while (angle_diff < -M_PI) angle_diff += 2.0f * M_PI;
-        
+
         // Smoothly rotate toward desired angle using angular velocity
         // Higher gain = faster alignment
         float alignment_rate = static_cast<float>(caster_alignment_rate_);
@@ -369,7 +384,8 @@ void DiffDriveCaster::BeforePhysicsStep(const Timekeeper& timekeeper) {
     pose_msg_.pose.pose.position.x = position.x;
     pose_msg_.pose.pose.position.y = position.y;
     pose_msg_.pose.pose.position.z = 0;
-    pose_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    pose_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
 
     // Noisy odometry message
     odom_msg_.header.stamp = timekeeper.GetSimTime();
@@ -377,11 +393,14 @@ void DiffDriveCaster::BeforePhysicsStep(const Timekeeper& timekeeper) {
     // Odometry starts at the spawn pose and uses its initial heading.
     const double dx = position.x - initial_position_.x;
     const double dy = position.y - initial_position_.y;
-    odom_msg_.pose.pose.position.x = cos(initial_angle_) * dx + sin(initial_angle_) * dy;
-    odom_msg_.pose.pose.position.y = -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.x =
+        cos(initial_angle_) * dx + sin(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.y =
+        -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
     ground_truth_msg_.pose.pose.position.x = position.x;
     ground_truth_msg_.pose.pose.position.y = position.y;
-    ground_truth_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    ground_truth_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
 
     odom_msg_.twist.twist = ground_truth_msg_.twist.twist;
 

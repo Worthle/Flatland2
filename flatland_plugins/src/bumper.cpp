@@ -3,14 +3,14 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Full license notices: LICENSE.
 
-#include <flatland_msgs/msg/collision.hpp>
-#include <flatland_msgs/msg/collisions.hpp>
 #include <flatland_plugins/bumper.h>
 #include <flatland_server/exceptions.h>
 #include <flatland_server/timekeeper.h>
 #include <flatland_server/yaml_reader.h>
-#include <pluginlib/class_list_macros.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <flatland_msgs/msg/collision.hpp>
+#include <flatland_msgs/msg/collisions.hpp>
+#include <pluginlib/class_list_macros.hpp>
 
 using namespace flatland_server;
 
@@ -57,11 +57,11 @@ void Bumper::OnInitialize(const YAML::Node &config) {
       nh_->create_publisher<flatland_msgs::msg::Collisions>(topic_name_, 1);
 
   RCLCPP_DEBUG(rclcpp::get_logger("Bumper"),
-                  "Initialized with params: topic(%s) world_frame_id(%s) "
-                  "publish_all_collisions(%d) update_rate(%f) exclude({%s})",
-                  topic_name_.c_str(), world_frame_id_.c_str(),
-                  publish_all_collisions_, update_rate_,
-                  boost::algorithm::join(excluded_body_names, ",").c_str());
+               "Initialized with params: topic(%s) world_frame_id(%s) "
+               "publish_all_collisions(%d) update_rate(%f) exclude({%s})",
+               topic_name_.c_str(), world_frame_id_.c_str(),
+               publish_all_collisions_, update_rate_,
+               boost::algorithm::join(excluded_body_names, ",").c_str());
 }
 
 void Bumper::BeforePhysicsStep(const Timekeeper &timekeeper) {

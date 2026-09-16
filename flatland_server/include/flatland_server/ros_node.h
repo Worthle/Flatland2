@@ -17,7 +17,7 @@ namespace flatland_server {
  * The reference must be assigned exactly once, early in main(), before any
  * flatland object is constructed.
  */
-rclcpp::Node::SharedPtr & ros_node();
+rclcpp::Node::SharedPtr& ros_node();
 
 }  // namespace flatland_server
 

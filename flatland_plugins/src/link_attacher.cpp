@@ -5,8 +5,8 @@
 #include <flatland_plugins/link_attacher.h>
 #include <flatland_server/exceptions.h>
 #include <flatland_server/yaml_reader.h>
-#include <pluginlib/class_list_macros.hpp>
 #include <boost/algorithm/string/join.hpp>
+#include <pluginlib/class_list_macros.hpp>
 
 #include <cmath>
 #include <set>
@@ -42,8 +42,7 @@ void LinkAttacher::OnInitialize(const YAML::Node &config) {
       reader.Get<std::string>("state_topic", "attached_model");
   std::string elevation_source =
       reader.Get<std::string>("elevation_source_body", "");
-  carry_elevation_offset_ =
-      reader.Get<double>("carry_elevation_offset", 0.0);
+  carry_elevation_offset_ = reader.Get<double>("carry_elevation_offset", 0.0);
   // a model detached while lifted settles to the ground at this rate (m/s)
   // instead of snapping down in one frame
   drop_speed_ = reader.Get<double>("drop_speed", 0.5);
@@ -72,29 +71,25 @@ void LinkAttacher::OnInitialize(const YAML::Node &config) {
   // collisions) stay intact
   nocollide_group_ = GetModel()->cfr_->RegisterNoCollide();
 
-  state_pub_ = nh_->create_publisher<std_msgs::msg::String>(
-      state_topic, 1);
+  state_pub_ = nh_->create_publisher<std_msgs::msg::String>(state_topic, 1);
   attach_srv_ = nh_->create_service<flatland_msgs::srv::Attach>(
-      attach_service,
-      std::bind(&LinkAttacher::OnAttachRequest, this, std::placeholders::_1,
-                std::placeholders::_2));
+      attach_service, std::bind(&LinkAttacher::OnAttachRequest, this,
+                                std::placeholders::_1, std::placeholders::_2));
   detach_srv_ = nh_->create_service<std_srvs::srv::Trigger>(
-      detach_service,
-      std::bind(&LinkAttacher::OnDetachRequest, this, std::placeholders::_1,
-                std::placeholders::_2));
+      detach_service, std::bind(&LinkAttacher::OnDetachRequest, this,
+                                std::placeholders::_1, std::placeholders::_2));
 
   update_timer_.SetRate(update_rate_);
   attacher_registry[GetModel()] = this;
 
-  RCLCPP_INFO(rclcpp::get_logger("LinkAttacher"),
-              "Initialized link attacher on body(%s), prefixes({%s}) "
-              "capture_point(%f,%f) capture_range(%f) services(%s, %s) "
-              "elevation_source(%s)",
-              body_name.c_str(),
-              boost::algorithm::join(model_prefixes_, ",").c_str(),
-              capture_point_.x, capture_point_.y, capture_range_,
-              attach_service.c_str(), detach_service.c_str(),
-              elevation_source.c_str());
+  RCLCPP_INFO(
+      rclcpp::get_logger("LinkAttacher"),
+      "Initialized link attacher on body(%s), prefixes({%s}) "
+      "capture_point(%f,%f) capture_range(%f) services(%s, %s) "
+      "elevation_source(%s)",
+      body_name.c_str(), boost::algorithm::join(model_prefixes_, ",").c_str(),
+      capture_point_.x, capture_point_.y, capture_range_,
+      attach_service.c_str(), detach_service.c_str(), elevation_source.c_str());
 }
 
 LinkAttacher::~LinkAttacher() {
@@ -194,8 +189,7 @@ void LinkAttacher::SetModelElevation(Model *model, double elevation) {
   }
 }
 
-bool LinkAttacher::Attach(const std::string &model_name,
-                          std::string &message) {
+bool LinkAttacher::Attach(const std::string &model_name, std::string &message) {
   if (!attached_model_name_.empty()) {
     message =
         "already attached to \"" + attached_model_name_ + "\", detach first";
@@ -288,8 +282,8 @@ bool LinkAttacher::Detach(std::string &message) {
   // the joint may already be gone if the target model was deleted: only
   // destroy it if it is still connected to the attach body
   bool joint_alive = false;
-  for (b2JointEdge *edge = attach_body_->GetPhysicsBody()->GetJointList();
-       edge; edge = edge->next) {
+  for (b2JointEdge *edge = attach_body_->GetPhysicsBody()->GetJointList(); edge;
+       edge = edge->next) {
     if (edge->joint == joint_) {
       joint_alive = true;
       break;
@@ -308,8 +302,7 @@ bool LinkAttacher::Detach(std::string &message) {
   if (target) {
     SetCollisionGroup(target, 0);
     if (!target->bodies_.empty() && target->bodies_[0]->elevation_ > 0.0) {
-      if (!settling_model_.empty() &&
-          settling_model_ != attached_model_name_) {
+      if (!settling_model_.empty() && settling_model_ != attached_model_name_) {
         // only one model settles at a time; ground the previous one
         Model *old_settling = FindModelByName(settling_model_);
         if (old_settling) SetModelElevation(old_settling, 0.0);

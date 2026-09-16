@@ -3,19 +3,19 @@
 // SPDX-License-Identifier: BSD-3-Clause
 // Full license notices: LICENSE.
 
+#include <flatland_plugins/asset_path.h>
 #include <flatland_plugins/mock_lidar3d.h>
 #include <flatland_plugins/ros2_compat.h>
 #include <flatland_server/exceptions.h>
 #include <flatland_server/yaml_reader.h>
 #include <tf2/LinearMath/Quaternion.h>
-#include <pluginlib/class_list_macros.hpp>
-#include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <boost/algorithm/string/join.hpp>
 #include <array>
-#include <flatland_plugins/asset_path.h>
+#include <boost/algorithm/string/join.hpp>
 #include <cmath>
 #include <fstream>
 #include <limits>
+#include <pluginlib/class_list_macros.hpp>
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 #include <sstream>
 
 using namespace flatland_server;
@@ -35,10 +35,13 @@ void MockLidar3D::OnInitialize(const YAML::Node &config) {
 
   if (!pcd_path_.empty()) {
     LoadPcd(pcd_path_);
-    const size_t threads = sampling_threads_ > 0 ? sampling_threads_ :
-        std::min(8u, std::max(1u, std::thread::hardware_concurrency()));
-    pcd_sampler_ = std::make_unique<PcdSampler>(map_pts_, elevations_,
-        elev_tolerance_, num_rays_, min_range_, max_range_, threads);
+    const size_t threads =
+        sampling_threads_ > 0
+            ? sampling_threads_
+            : std::min(8u, std::max(1u, std::thread::hardware_concurrency()));
+    pcd_sampler_ = std::make_unique<PcdSampler>(
+        map_pts_, elevations_, elev_tolerance_, num_rays_, min_range_,
+        max_range_, threads);
   }
 
   // precompute the azimuth directions in the lidar frame
@@ -114,13 +117,14 @@ void MockLidar3D::LoadPcd(const std::string &path) {
   }
 
   RCLCPP_INFO(rclcpp::get_logger("MockLidar3D"),
-              "MockLidar3D loaded %zu map points from %s",
-              map_pts_.size() / 3, path.c_str());
+              "MockLidar3D loaded %zu map points from %s", map_pts_.size() / 3,
+              path.c_str());
 }
 
 void MockLidar3D::BeforePhysicsStep(const Timekeeper &timekeeper) {
   if (pending_scan_.valid() &&
-      pending_scan_.wait_for(std::chrono::seconds(0)) == std::future_status::ready) {
+      pending_scan_.wait_for(std::chrono::seconds(0)) ==
+          std::future_status::ready) {
     FinishPcdScan();
   }
   if (!update_timer_.CheckUpdate(timekeeper)) {
@@ -137,7 +141,8 @@ void MockLidar3D::BeforePhysicsStep(const Timekeeper &timekeeper) {
   }
 
   if (!map_pts_.empty()) {
-    // A slow scan skips the next capture instead of queuing work or blocking physics.
+    // A slow scan skips the next capture instead of queuing work or blocking
+    // physics.
     if (!pending_scan_.valid()) SamplePcdMode(timekeeper);
   } else {
     SampleExtrusionMode(timekeeper);
@@ -158,8 +163,8 @@ void MockLidar3D::SamplePcdMode(const Timekeeper &timekeeper) {
 
   scan_stamp_ = timekeeper.GetSimTime();
   dynamic_returns_ = PcdReturns(nbins * nch);
-  auto& best_r2 = dynamic_returns_.range_squared;
-  auto& best_pt = dynamic_returns_.points;
+  auto &best_r2 = dynamic_returns_.range_squared;
+  auto &best_pt = dynamic_returns_.points;
 
   // Snapshot dynamic geometry at the capture pose on the physics thread.
   // Worker threads never access Box2D, bodies, or plugin-owned pose state.
@@ -196,16 +201,15 @@ void MockLidar3D::SamplePcdMode(const Timekeeper &timekeeper) {
     }
   }
 
-  pending_scan_ = std::async(std::launch::async,
-      [sampler = pcd_sampler_.get(), sx, sy, sz = origin_z_, yaw]() -> PcdReturns {
-        return sampler->Sample(sx, sy, sz, yaw);
-      });
+  pending_scan_ = std::async(std::launch::async, [
+    sampler = pcd_sampler_.get(), sx, sy, sz = origin_z_, yaw
+  ]()->PcdReturns { return sampler->Sample(sx, sy, sz, yaw); });
 }
 
 void MockLidar3D::FinishPcdScan() {
   auto returns = pending_scan_.get();
-  auto& best_r2 = returns.range_squared;
-  auto& best_pt = returns.points;
+  auto &best_r2 = returns.range_squared;
+  auto &best_pt = returns.points;
   for (size_t idx = 0; idx < best_r2.size(); ++idx) {
     if (dynamic_returns_.range_squared[idx] < best_r2[idx]) {
       best_r2[idx] = dynamic_returns_.range_squared[idx];
@@ -258,8 +262,10 @@ void MockLidar3D::SampleExtrusionMode(const Timekeeper &timekeeper) {
   }
 
   if (ceiling_height_ > 0.0) {
-    for (double r = ceiling_ring_step_; r <= ceiling_max_range_ + 1e-9;
-         r += ceiling_ring_step_) {
+    const int rings = static_cast<int>(
+        std::floor((ceiling_max_range_ + 1e-9) / ceiling_ring_step_));
+    for (int ring = 0; ring < rings; ++ring) {
+      const double r = (ring + 1) * ceiling_ring_step_;
       for (int a = 0; a < ceiling_azimuths_; a++) {
         double angle = a * (2.0 * M_PI / ceiling_azimuths_);
         pts.push_back({static_cast<float>(r * cos(angle)),
@@ -307,8 +313,7 @@ void MockLidar3D::PublishCloud(const std::vector<std::array<float, 3>> &pts,
   cloud_publisher_->publish(cloud);
 }
 
-float Lidar3DRayCallback::ReportFixture(b2Fixture *fixture,
-                                        const b2Vec2 &point,
+float Lidar3DRayCallback::ReportFixture(b2Fixture *fixture, const b2Vec2 &point,
                                         const b2Vec2 &normal, float fraction) {
   // sensors are not real obstacles
   if (fixture->IsSensor()) return -1.0f;
@@ -353,12 +358,9 @@ void MockLidar3D::ParseParameters(const YAML::Node &config) {
   // Uniform example beam elevations, in degrees.
   std::vector<double> elevations_deg = reader.GetList<double>(
       "elevations_deg",
-      {-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30},
-      1, -1);
-  double elev_tolerance_deg =
-      reader.Get<double>("elev_tolerance_deg", 1.4);
-  default_object_height_ =
-      reader.Get<double>("default_object_height", 0.3);
+      {-15, -12, -9, -6, -3, 0, 3, 6, 9, 12, 15, 18, 21, 24, 27, 30}, 1, -1);
+  double elev_tolerance_deg = reader.Get<double>("elev_tolerance_deg", 1.4);
+  default_object_height_ = reader.Get<double>("default_object_height", 0.3);
 
   // legacy extrusion mode
   heights_ = reader.GetList<double>(
@@ -374,7 +376,8 @@ void MockLidar3D::ParseParameters(const YAML::Node &config) {
   reader.EnsureAccessedAllKeys();
 
   if (sampling_threads_ < 0 || sampling_threads_ > 64) {
-    throw YAMLException("sampling_threads must be between 0 (automatic) and 64");
+    throw YAMLException(
+        "sampling_threads must be between 0 (automatic) and 64");
   }
   if (num_rays_ < 8) {
     throw YAMLException("Invalid \"num_rays\", must be >= 8");
@@ -384,6 +387,17 @@ void MockLidar3D::ParseParameters(const YAML::Node &config) {
     throw YAMLException(
         "Invalid \"min_range\"/\"max_range\", must have max_range > "
         "min_range");
+  }
+
+  if (ceiling_height_ > 0.0 &&
+      (!std::isfinite(ceiling_height_) || !std::isfinite(ceiling_max_range_) ||
+       ceiling_max_range_ <= 0.0 || !std::isfinite(ceiling_ring_step_) ||
+       ceiling_ring_step_ <= 0.0 || ceiling_azimuths_ <= 0 ||
+       (ceiling_max_range_ + 1e-9) / ceiling_ring_step_ >
+           std::numeric_limits<int>::max())) {
+    throw YAMLException(
+        "Ceiling sampling requires finite positive dimensions, "
+        "positive azimuths and a representable ring count");
   }
 
   elevations_.clear();

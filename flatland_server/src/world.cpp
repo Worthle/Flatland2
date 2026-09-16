@@ -50,10 +50,10 @@
 #include <flatland_server/types.h>
 #include <flatland_server/world.h>
 #include <flatland_server/yaml_reader.h>
-#include <rclcpp/rclcpp.hpp>
 #include <yaml-cpp/yaml.h>
 #include <boost/filesystem.hpp>
 #include <map>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
 
 namespace flatland_server {
@@ -202,8 +202,9 @@ void World::LoadLayers(YamlReader &layers_reader) {
       map_path = world_yaml_dir_ / map_path;
     }
 
-    RCLCPP_INFO(rclcpp::get_logger("World"), "Loading layer \"%s\" from path=\"%s\"",
-                   names[0].c_str(), map_path.string().c_str());
+    RCLCPP_INFO(rclcpp::get_logger("World"),
+                "Loading layer \"%s\" from path=\"%s\"", names[0].c_str(),
+                map_path.string().c_str());
 
     Layer *layer = Layer::MakeLayer(physics_world_, &cfr_, map_path.string(),
                                     names, color, properties);
@@ -211,7 +212,8 @@ void World::LoadLayers(YamlReader &layers_reader) {
         std::pair<std::vector<std::string>, Layer *>(names, layer));
     layers_.push_back(layer);
 
-    RCLCPP_INFO(rclcpp::get_logger("World"), "Layer \"%s\" loaded", layer->name_.c_str());
+    RCLCPP_INFO(rclcpp::get_logger("World"), "Layer \"%s\" loaded",
+                layer->name_.c_str());
     layer->DebugOutput();
   }
 }
@@ -255,7 +257,7 @@ void World::LoadModel(const std::string &model_yaml_path, const std::string &ns,
   }
 
   RCLCPP_INFO(rclcpp::get_logger("World"), "Loading model from path=\"%s\"",
-                 abs_path.string().c_str());
+              abs_path.string().c_str());
 
   Model *m =
       Model::MakeModel(physics_world_, &cfr_, abs_path.string(), ns, name);
@@ -285,7 +287,8 @@ void World::LoadModel(const std::string &model_yaml_path, const std::string &ns,
   }
   int_marker_manager_.createInteractiveMarker(name, pose, body_markers);
 
-  RCLCPP_INFO(rclcpp::get_logger("World"), "Model \"%s\" loaded", m->name_.c_str());
+  RCLCPP_INFO(rclcpp::get_logger("World"), "Model \"%s\" loaded",
+              m->name_.c_str());
   m->DebugOutput();
 }
 

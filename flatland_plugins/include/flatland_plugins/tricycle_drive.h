@@ -4,8 +4,8 @@
 // Full license notices: LICENSE.
 
 #include <Box2D/Box2D.h>
-#include <flatland_plugins/update_timer.h>
 #include <flatland_plugins/dynamics_limits.h>
+#include <flatland_plugins/update_timer.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/timekeeper.h>
 #include <geometry_msgs/msg/twist.hpp>
@@ -29,10 +29,10 @@ class TricycleDrive : public flatland_server::ModelPlugin {
   double axel_track_;     ///< normal distrance between the rear two wheels
   double wheelbase_;      ///< distance between the front and rear wheel
   b2Vec2 rear_center_;    ///< middle point between the two rear wheels
-  bool invert_steering_angle_;     ///< whether to invert steering angle
-  double max_steer_angle_;         ///< max abs. steering allowed [rad]
-  DynamicsLimits angular_dynamics_; ///< Angular dynamics constraints
-  DynamicsLimits linear_dynamics_;  ///< Linear dynamics constraints
+  bool invert_steering_angle_;       ///< whether to invert steering angle
+  double max_steer_angle_;           ///< max abs. steering allowed [rad]
+  DynamicsLimits angular_dynamics_;  ///< Angular dynamics constraints
+  DynamicsLimits linear_dynamics_;   ///< Linear dynamics constraints
   double delta_command_;  ///< The current target (commanded) wheel angle
   double theta_f_;        ///< The current angular offset of the front wheel
   double d_delta_;        ///< The current angular speed of the front wheel

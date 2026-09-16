@@ -16,8 +16,8 @@
 #include <rviz_rendering/objects/arrow.hpp>
 #include <rviz_rendering/objects/billboard_line.hpp>
 
-#include <flatland_msgs/srv/spawn_model.hpp>
 #include <flatland_server/yaml_reader.h>
+#include <flatland_msgs/srv/spawn_model.hpp>
 
 namespace flatland_viz {
 

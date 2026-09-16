@@ -4,6 +4,8 @@ project(flatland_server)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 find_package(ament_cmake REQUIRED)
@@ -119,4 +121,11 @@ install(FILES flatland_plugins.xml
 ament_export_include_directories(include)
 ament_export_libraries(flatland_lib)
 ament_export_dependencies(${dependencies})
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_visualization test/test_visualization.cpp)
+  target_link_libraries(test_visualization flatland_lib)
+endif()
+
 ament_package()

@@ -6,85 +6,54 @@
 Plugin Catalog for Flatland 2
 =============================
 
-This catalog covers the 20 plugin types registered in this branch's
-``flatland_plugins/flatland_plugins.xml``. The comparison baseline is
-Avidbots' ``ros2-humble`` at commit
-``fc3f233ed1a8009658f9eed827d1adea1cf6a511``, whose registry is named
-``flatland_plugins/plugin_description.xml``.
-
-All nine baseline plugin types remain available. Eleven additional types are
-registered in Flatland 2. This describes availability relative to that commit;
-it does not claim that every additional type was independently invented here
-or absent from every other upstream branch. Source copyright notices retain
-their own attribution.
+Plugin types and configuration references:
 
 .. list-table::
    :header-rows: 1
-   :widths: 28 22 50
+   :widths: 35 65
 
-   * - Plugin type / reference
-     - Compared with Humble
+   * - Plugin
      - Purpose
-   * - :doc:`BoolSensor <bool_sensor>`
-     - Retained
-     - Boolean collision feedback
-   * - :doc:`Bumper <bumper>`
-     - Retained
-     - Contact information
-   * - :doc:`DiffDrive <diff_drive>`
-     - Retained and extended
-     - Differential drive, including optional OE response models
    * - :doc:`DiffDriveCaster <diff_drive_caster>`
-     - Additional
      - Differential drive with passive caster effects
-   * - :doc:`ForkController <fork_controller>`
-     - Additional
-     - Absolute fork-height goals and simplified payload feedback
-   * - :doc:`Forklift <forklift>`
-     - Additional
-     - Fractional lift commands and fork elevation animation
-   * - :doc:`Gps <gps>`
-     - Retained
-     - Simulated GPS receiver
-   * - :doc:`Imu <imu>`
-     - Additional
-     - Planar inertial measurements
-   * - :doc:`Laser <laser>`
-     - Retained and extended
-     - 2D laser scanning, including body/elevation filtering
-   * - :doc:`LinkAttacher <link_attacher>`
-     - Additional
-     - Weld, carry and release a payload model
-   * - :doc:`MockDetection <mock_detection>`
-     - Additional
-     - Noisy visible-target poses and optional last-seen TFs
-   * - :doc:`MockLidar3D <mock_lidar3d>`
-     - Additional
-     - Point-cloud map sampling or extruded 2D hits
-   * - :doc:`ModelTfPublisher <model_tf_publisher>`
-     - Retained
-     - Transforms between model bodies
+   * - :doc:`TricycleDriveAckermann <tricycle_drive_ackermann>`
+     - Steering-wheel drive using Ackermann commands
    * - :doc:`OmniDrive <omni_drive>`
-     - Additional
      - Two independently steered wheel assemblies
-   * - :doc:`RandomWall <random_wall>`
-     - Retained; previously undocumented
-     - World plugin that adds offset wall edges
    * - :doc:`SystemIdDrive <system_id_drive>`
-     - Additional
      - Coupled NARX propulsion predictions
    * - :doc:`TerrainModifier <terrain_modifier>`
-     - Additional
-     - Planar slip, rubble and slope disturbances
+     - Planar slip, rubble, and slope disturbances
+   * - :doc:`Forklift <forklift>`
+     - Fractional lift commands and fork elevation
+   * - :doc:`LinkAttacher <link_attacher>`
+     - Attach, carry, and release payloads
+   * - :doc:`ForkController <fork_controller>`
+     - Height goals and payload feedback
+   * - :doc:`MockLidar3D <mock_lidar3d>`
+     - Point-cloud sampling or extruded 2D hits
+   * - :doc:`MockDetection <mock_detection>`
+     - Visible target poses with noise and optional TFs
+   * - :doc:`Imu <imu>`
+     - Planar inertial measurements
+   * - :doc:`DiffDrive <diff_drive>`
+     - Differential drive with optional OE response models
+   * - :doc:`Laser <laser>`
+     - 2D scanning with body and elevation filters
+   * - :doc:`BoolSensor <bool_sensor>`
+     - Boolean collision feedback
+   * - :doc:`Bumper <bumper>`
+     - Contact information
+   * - :doc:`Gps <gps>`
+     - Simulated GPS
+   * - :doc:`ModelTfPublisher <model_tf_publisher>`
+     - Transforms between model bodies
    * - :doc:`TricycleDrive <tricycle_drive>`
-     - Retained
      - Steering-wheel drive using Twist commands
-   * - :doc:`TricycleDriveAckermann <tricycle_drive_ackermann>`
-     - Additional
-     - Steering-wheel drive using Ackermann commands
    * - :doc:`Tween <tween>`
-     - Retained
      - Scripted motion between poses
+   * - :doc:`RandomWall <random_wall>`
+     - Offset wall edges
 
 Using the reference pages
 -------------------------
@@ -110,7 +79,3 @@ six-degree-of-freedom vehicle physics. Choose one propulsion plugin per body,
 and put ``TerrainModifier`` after it when combining them. Fork handling uses
 ``Forklift``, ``LinkAttacher`` and ``ForkController`` together.
 
-The added pages describe the public Flatland 2 source, with portable names
-and bundled example assets. Historical tutorials and the original plugin
-pages elsewhere in this documentation may retain ROS 1 commands; use the
-repository README for the ROS 2 Humble build and launch workflow.

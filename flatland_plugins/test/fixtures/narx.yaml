@@ -1,0 +1,11 @@
+sample_rate_hz: 10.0
+sub_models:
+  speed:
+    input_names: [command]
+    terms:
+      - {theta: 0.5, factors: [[y, 1]]}
+      - {theta: 0.5, factors: [[x1, 1]]}
+  response:
+    input_names: [speed]
+    terms:
+      - {theta: 2.0, factors: [[x1, 1]]}

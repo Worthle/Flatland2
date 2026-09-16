@@ -53,8 +53,8 @@
 #include <flatland_server/timekeeper.h>
 #include <flatland_server/world_plugin.h>
 #include <flatland_server/yaml_reader.h>
-#include <pluginlib/class_loader.hpp>
 #include <yaml-cpp/yaml.h>
+#include <pluginlib/class_loader.hpp>
 
 namespace flatland_server {
 

@@ -101,9 +101,9 @@ int main(int argc, char **argv) {
     // Add displays for new topics.
     for (const auto &topic : topics) {
       if (debug_displays.count(topic) == 0) {
-        rviz_common::Display *display = manager->createDisplay(
-            "rviz_default_plugins/MarkerArray",
-            QString::fromLocal8Bit(topic.c_str()), true);
+        rviz_common::Display *display =
+            manager->createDisplay("rviz_default_plugins/MarkerArray",
+                                   QString::fromLocal8Bit(topic.c_str()), true);
         if (display) {
           QString topic_qt = QString::fromLocal8Bit(
               (std::string("/flatland_server/debug/") + topic).c_str());

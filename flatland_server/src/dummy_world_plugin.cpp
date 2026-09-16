@@ -48,8 +48,8 @@
 #include <flatland_server/exceptions.h>
 #include <flatland_server/world_plugin.h>
 #include <flatland_server/yaml_reader.h>
-#include <pluginlib/class_list_macros.hpp>
 #include <yaml-cpp/yaml.h>
+#include <pluginlib/class_list_macros.hpp>
 using namespace flatland_server;
 
 namespace flatland_plugins {

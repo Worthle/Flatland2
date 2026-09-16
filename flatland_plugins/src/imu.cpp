@@ -6,14 +6,14 @@
 #include <Box2D/Box2D.h>
 #include <flatland_plugins/imu.h>
 
-#include <cmath>
 #include <flatland_plugins/ros2_compat.h>
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/model_plugin.h>
+#include <tf2/utils.h>
+#include <cmath>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <pluginlib/class_list_macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace flatland_plugins {
@@ -79,7 +79,8 @@ void Imu::OnInitialize(const YAML::Node& config) {
   }
 
   imu_pub_ = nh_->create_publisher<sensor_msgs::msg::Imu>(imu_topic, 1);
-  ground_truth_pub_ = nh_->create_publisher<sensor_msgs::msg::Imu>(ground_truth_topic, 1);
+  ground_truth_pub_ =
+      nh_->create_publisher<sensor_msgs::msg::Imu>(ground_truth_topic, 1);
 
   // init the values for the messages
   ground_truth_msg_.header.frame_id = GetModel()->NameSpaceTF(imu_frame_id_);
@@ -127,7 +128,8 @@ void Imu::OnInitialize(const YAML::Node& config) {
   imu_tf_.transform.rotation.z = 0;  // q.z();
   imu_tf_.transform.rotation.w = 1;  // q.w();
 
-  RCLCPP_DEBUG(rclcpp::get_logger("Imu"),
+  RCLCPP_DEBUG(
+      rclcpp::get_logger("Imu"),
       "Initialized with params body(%p %s) imu_frame_id(%s) "
       "imu_pub(%s) ground_truth_pub(%s) "
       "orientation_noise({%f,%f,%f}) angular_velocity_noise({%f,%f,%f}) "
@@ -172,7 +174,8 @@ void Imu::AfterPhysicsStep(const Timekeeper& timekeeper) {
     // get the state of the body and publish the data
 
     ground_truth_msg_.header.stamp = timekeeper.GetSimTime();
-    ground_truth_msg_.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    ground_truth_msg_.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
     ground_truth_msg_.angular_velocity.z = angular_vel;
 
     double global_acceleration_x =

@@ -7,10 +7,10 @@
 #include <flatland_plugins/update_timer.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/timekeeper.h>
+#include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/msg/twist.hpp>
 #include <random>
 #include <sensor_msgs/msg/imu.hpp>
-#include <tf2_ros/transform_broadcaster.h>
 
 #ifndef FLATLAND_PLUGINS_IMU_H
 #define FLATLAND_PLUGINS_IMU_H
@@ -35,8 +35,9 @@ class Imu : public flatland_server::ModelPlugin {
 
   std::default_random_engine rng_;
   std::array<std::normal_distribution<double>, 9> noise_gen_;
-  geometry_msgs::msg::TransformStamped imu_tf_;   ///< tf from body to IMU frame
-  std::shared_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;  ///< broadcast IMU frame
+  geometry_msgs::msg::TransformStamped imu_tf_;  ///< tf from body to IMU frame
+  std::shared_ptr<tf2_ros::TransformBroadcaster>
+      tf_broadcaster_;  ///< broadcast IMU frame
   std::string imu_frame_id_;
   bool broadcast_tf_;
   b2Vec2 linear_vel_local_prev;

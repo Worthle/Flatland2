@@ -9,12 +9,12 @@
 #include <flatland_server/exceptions.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/yaml_reader.h>
-#include <geometry_msgs/msg/transform_stamped.hpp>
-#include <pluginlib/class_list_macros.hpp>
 #include <boost/algorithm/string/join.hpp>
-#include <cmath>
-#include <limits>
 #include <chrono>
+#include <cmath>
+#include <geometry_msgs/msg/transform_stamped.hpp>
+#include <limits>
+#include <pluginlib/class_list_macros.hpp>
 
 using namespace flatland_server;
 
@@ -25,7 +25,8 @@ void Laser::OnInitialize(const YAML::Node& config) {
   ParseParameters(config);
 
   update_timer_.SetRate(update_rate_);
-  scan_publisher_ = nh_->create_publisher<sensor_msgs::msg::LaserScan>(topic_, 1);
+  scan_publisher_ =
+      nh_->create_publisher<sensor_msgs::msg::LaserScan>(topic_, 1);
 
   // construct the body to laser transformation matrix once since it never
   // changes
@@ -46,9 +47,9 @@ void Laser::OnInitialize(const YAML::Node& config) {
   // pre-calculate the laser points w.r.t to the laser frame, since this never
   // changes
   for (unsigned int i = 0; i < num_laser_points; i++) {
-    
     float angle = min_angle_ + i * increment_;
-    if (upside_down_) {  // Laser inverted, so laser local frame angles are also inverted
+    if (upside_down_) {  // Laser inverted, so laser local frame angles are also
+                         // inverted
       angle = -angle;
     }
 
@@ -83,7 +84,6 @@ void Laser::OnInitialize(const YAML::Node& config) {
   } else {
     q.setRPY(0, 0, origin_.theta);
   }
-  
 
   laser_tf_.header.frame_id = flatland_plugins::resolveTf(
       "", GetModel()->NameSpaceTF(body_->GetName()));
@@ -104,14 +104,18 @@ void Laser::BeforePhysicsStep(const Timekeeper& timekeeper) {
     return;
   }
 
-  // only compute and publish when the number of subscribers is not zero, or always_publish_ is true
+  // only compute and publish when the number of subscribers is not zero, or
+  // always_publish_ is true
   if (always_publish_ || scan_publisher_->get_subscription_count() > 0) {
     // START_PROFILE(timekeeper, "compute laser range");
     auto start = std::chrono::steady_clock::now();
     ComputeLaserRanges();
 
-    RCLCPP_INFO_THROTTLE(rclcpp::get_logger("Laser Plugin"), *nh_->get_clock(), (1)*1000, "took %luus",
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::steady_clock::now() - start).count());
+    RCLCPP_INFO_THROTTLE(rclcpp::get_logger("Laser Plugin"), *nh_->get_clock(),
+                         (1) * 1000, "took %luus",
+                         std::chrono::duration_cast<std::chrono::microseconds>(
+                             std::chrono::steady_clock::now() - start)
+                             .count());
 
     // END_PROFILE(timekeeper, "compute laser range");
     laser_scan_.header.stamp = timekeeper.GetSimTime();
@@ -218,10 +222,10 @@ void Laser::ComputeLaserRanges() {
   auto i = laser_scan_.intensities.begin();
   auto r = laser_scan_.ranges.begin();
   for (auto clusterIte = results.begin(); clusterIte != results.end();
-        ++clusterIte) {
+       ++clusterIte) {
     auto resultCluster = clusterIte->get();
     for (auto ite = resultCluster.begin(); ite != resultCluster.end();
-          ++ite, ++i, ++r) {
+         ++ite, ++i, ++r) {
       // Loop unswitching should occur
       if (reflectance) {
         *i = ite->second;
@@ -326,7 +330,8 @@ void Laser::ParseParameters(const YAML::Node& config) {
   for (const auto& ignore_body_name : ignore_bodies_names) {
     Body* ignored_body = GetModel()->GetBody(ignore_body_name);
     if (!ignored_body) {
-      throw YAMLException("Cannot find ignore_bodies body with name " + ignore_body_name);
+      throw YAMLException("Cannot find ignore_bodies body with name " +
+                          ignore_body_name);
     }
     ignored_bodies_.insert(ignored_body->GetPhysicsBody());
   }
@@ -347,15 +352,18 @@ void Laser::ParseParameters(const YAML::Node& config) {
   rng_ = std::default_random_engine(rd());
   noise_gen_ = std::normal_distribution<float>(0.0, noise_std_dev_);
 
-  RCLCPP_INFO(rclcpp::get_logger("flatland"),   //"LaserPlugin",
+  RCLCPP_INFO(
+      rclcpp::get_logger("flatland"),  //"LaserPlugin",
       "Laser %s params: topic(%s) body(%s, %p) origin(%f,%f,%f) upside_down(%d)"
       "frame_id(%s) broadcast_tf(%d) update_rate(%f) range(%f)  "
       "noise_std_dev(%f) angle_min(%f) angle_max(%f) "
-      "angle_increment(%f) layers(0x%u {%s}) always_publish(%d) ignore_bodies({%s})",
+      "angle_increment(%f) layers(0x%u {%s}) always_publish(%d) "
+      "ignore_bodies({%s})",
       GetName().c_str(), topic_.c_str(), body_name.c_str(), body_, origin_.x,
       origin_.y, origin_.theta, upside_down_, frame_id_.c_str(), broadcast_tf_,
       update_rate_, range_, noise_std_dev_, min_angle_, max_angle_, increment_,
-      layers_bits_, boost::algorithm::join(layers, ",").c_str(), always_publish_,
+      layers_bits_, boost::algorithm::join(layers, ",").c_str(),
+      always_publish_,
       boost::algorithm::join(ignore_bodies_names, ",").c_str());
 }
 };  // namespace flatland_plugins

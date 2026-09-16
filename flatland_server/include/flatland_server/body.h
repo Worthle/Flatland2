@@ -76,12 +76,13 @@ class Body {
 
   /// Render-only offset; does not change collision, sensor height or TF.
   double visual_z_offset_ = 0.0;
-  /// Optional RViz mesh URI; footprints still define planar physics and sensing.
+  /// Optional RViz mesh URI; footprints still define planar physics and
+  /// sensing.
   std::string visual_mesh_;
   struct WheelVisual {
     double radius = 0.0;  ///< Positive radius enables the cylindrical visual.
     double width = 0.0;
-    Vec2 center{0, 0};    ///< Axle center in the body's planar coordinates.
+    Vec2 center{0, 0};  ///< Axle center in the body's planar coordinates.
     double rotation = 0.0;
     bool initialized = false;
     b2Vec2 last_position{0, 0};

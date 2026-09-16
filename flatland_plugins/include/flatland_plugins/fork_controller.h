@@ -39,9 +39,9 @@ class ForkController : public ModelPlugin {
   double update_rate_;      ///< publish rate (Hz)
   std::string pose_frame_;  ///< frame_id stamped on fork/pose
 
-  bool has_goal_ = false;         ///< a fork goal has been received
-  double goal_z_ = 0.0;           ///< last commanded height (m, clamped)
-  double prev_elevation_ = 0.0;   ///< previous-step fork height (m)
+  bool has_goal_ = false;        ///< a fork goal has been received
+  double goal_z_ = 0.0;          ///< last commanded height (m, clamped)
+  double prev_elevation_ = 0.0;  ///< previous-step fork height (m)
   bool warned_no_forklift_ = false;
   bool warned_no_attacher_ = false;
 

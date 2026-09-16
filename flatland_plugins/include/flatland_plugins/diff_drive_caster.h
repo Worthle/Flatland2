@@ -11,11 +11,11 @@
 #include <flatland_plugins/update_timer.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/timekeeper.h>
-#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <tf2_ros/transform_broadcaster.h>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tf2_ros/transform_broadcaster.h>
 
 #include <random>
 #include <string>
@@ -29,9 +29,9 @@ namespace flatland_plugins {
  * @brief Caster wheel configuration
  */
 struct CasterConfig {
-  std::string body_name;   // Name of the caster body in the model
-  Body* body;              // Pointer to the caster body (resolved at init)
-  b2Vec2 contact_offset;   // Wheel contact point offset in caster body frame
+  std::string body_name;  // Name of the caster body in the model
+  Body* body;             // Pointer to the caster body (resolved at init)
+  b2Vec2 contact_offset;  // Wheel contact point offset in caster body frame
 };
 
 /**
@@ -43,8 +43,10 @@ class DiffDriveCaster : public flatland_server::ModelPlugin {
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr twist_sub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr odom_pub_;
   rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr ground_truth_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr ground_truth_pose_pub_;
-  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
+      ground_truth_pose_pub_;
+  rclcpp::Publisher<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr
+      twist_pub_;
 
   // Base body reference
   Body* body_;
@@ -90,11 +92,10 @@ class DiffDriveCaster : public flatland_server::ModelPlugin {
   //                1 = no lateral constraint (free sliding)
   double caster_lat_mu_;
   double caster_alignment_rate_ = 8.0;
-  
+
   // caster_long_mu: 0 = no rolling resistance
   //                 1 = full longitudinal constraint (no rolling)
   double caster_long_mu_;
-  
 
   /**
    * @brief Initialize the plugin from YAML configuration

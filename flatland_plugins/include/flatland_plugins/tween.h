@@ -27,7 +27,8 @@ class Tween : public flatland_server::ModelPlugin {
   Pose delta_;      // The maximum change
   float duration_;  // Seconds to enact change over
 
-  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr trigger_sub_;  // Handle forward/reverse trigger
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr
+      trigger_sub_;         // Handle forward/reverse trigger
   bool triggered_ = false;  // If true,animate forwards, otherwise backwards
 
   tweeny::tween<double, double, double> tween_;  // The tween object (x,y,theta)

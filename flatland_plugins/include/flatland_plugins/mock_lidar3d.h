@@ -33,32 +33,32 @@ namespace flatland_plugins {
  */
 class MockLidar3D : public ModelPlugin {
  public:
-  std::string topic_;     ///< topic to publish the PointCloud2 on
-  Body *body_;            ///< body the lidar is mounted on
-  Pose origin_;           ///< lidar pose w.r.t the body (x, y, yaw)
-  double origin_z_;       ///< lidar mount height above the floor (m)
-  std::string frame_id_;  ///< lidar frame id
-  bool broadcast_tf_;     ///< whether to broadcast lidar frame w.r.t body
-  double update_rate_;    ///< publish rate (Hz)
-  double min_range_;      ///< minimum return range (m)
-  double max_range_;      ///< maximum return range (m)
-  int num_rays_;          ///< azimuth bins over 360 degrees
-  uint16_t layers_bits_;  ///< layers the dynamic-object rays collide with
+  std::string topic_;           ///< topic to publish the PointCloud2 on
+  Body *body_;                  ///< body the lidar is mounted on
+  Pose origin_;                 ///< lidar pose w.r.t the body (x, y, yaw)
+  double origin_z_;             ///< lidar mount height above the floor (m)
+  std::string frame_id_;        ///< lidar frame id
+  bool broadcast_tf_;           ///< whether to broadcast lidar frame w.r.t body
+  double update_rate_;          ///< publish rate (Hz)
+  double min_range_;            ///< minimum return range (m)
+  double max_range_;            ///< maximum return range (m)
+  int num_rays_;                ///< azimuth bins over 360 degrees
+  uint16_t layers_bits_;        ///< layers the dynamic-object rays collide with
   double range_noise_std_dev_;  ///< gaussian noise on the measured range
 
   // pcd sampling mode
-  std::string pcd_path_;           ///< reference 3D map; empty = legacy mode
-  std::vector<float> map_pts_;     ///< flattened x,y,z of the map points
-  std::vector<double> elevations_;      ///< beam elevation channels (rad)
-  double elev_tolerance_;               ///< max |elev - channel| to accept
-  double default_object_height_;   ///< dyn body height when extrude is 0
+  std::string pcd_path_;            ///< reference 3D map; empty = legacy mode
+  std::vector<float> map_pts_;      ///< flattened x,y,z of the map points
+  std::vector<double> elevations_;  ///< beam elevation channels (rad)
+  double elev_tolerance_;           ///< max |elev - channel| to accept
+  double default_object_height_;    ///< dyn body height when extrude is 0
 
   // legacy extrusion mode (pcd_path empty)
   std::vector<double> heights_;  ///< z heights each 2D hit is replicated at
-  double ceiling_height_;     ///< z of the synthetic ceiling plane (0 = off)
-  double ceiling_max_range_;  ///< radius the ceiling is sampled out to
-  double ceiling_ring_step_;  ///< radial spacing of the ceiling sample rings
-  int ceiling_azimuths_;      ///< azimuth samples per ceiling ring
+  double ceiling_height_;        ///< z of the synthetic ceiling plane (0 = off)
+  double ceiling_max_range_;     ///< radius the ceiling is sampled out to
+  double ceiling_ring_step_;     ///< radial spacing of the ceiling sample rings
+  int ceiling_azimuths_;         ///< azimuth samples per ceiling ring
 
   std::default_random_engine rng_;                    ///< random generator
   std::normal_distribution<double> range_noise_gen_;  ///< range noise

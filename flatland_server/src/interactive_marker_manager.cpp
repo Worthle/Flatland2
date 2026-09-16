@@ -22,7 +22,7 @@ InteractiveMarkerManager::InteractiveMarkerManager(
       menu_handler_.insert(
           "Delete Model",
           std::bind(&InteractiveMarkerManager::deleteModelMenuCallback, this,
-                      std::placeholders::_1)),
+                    std::placeholders::_1)),
       interactive_markers::MenuHandler::NO_CHECKBOX);
   interactive_marker_server_->applyChanges();
 }
@@ -102,18 +102,17 @@ void InteractiveMarkerManager::createInteractiveMarker(
 
   // Bind feedback callbacks for the new interactive marker
   interactive_marker_server_->setCallback(
-      model_name,
-      std::bind(&InteractiveMarkerManager::processMouseUpFeedback, this, std::placeholders::_1),
+      model_name, std::bind(&InteractiveMarkerManager::processMouseUpFeedback,
+                            this, std::placeholders::_1),
       visualization_msgs::msg::InteractiveMarkerFeedback::MOUSE_UP);
   interactive_marker_server_->setCallback(
-      model_name,
-      std::bind(&InteractiveMarkerManager::processMouseDownFeedback, this,
-                  std::placeholders::_1),
+      model_name, std::bind(&InteractiveMarkerManager::processMouseDownFeedback,
+                            this, std::placeholders::_1),
       visualization_msgs::msg::InteractiveMarkerFeedback::MOUSE_DOWN);
   interactive_marker_server_->setCallback(
       model_name,
       std::bind(&InteractiveMarkerManager::processPoseUpdateFeedback, this,
-                  std::placeholders::_1),
+                std::placeholders::_1),
       visualization_msgs::msg::InteractiveMarkerFeedback::POSE_UPDATE);
 
   // Add context menu to the new interactive marker
@@ -124,7 +123,8 @@ void InteractiveMarkerManager::createInteractiveMarker(
 }
 
 void InteractiveMarkerManager::deleteModelMenuCallback(
-    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback) {
+    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr
+        &feedback) {
   // Delete the model just as when the DeleteModel service is called
   for (unsigned int i = 0; i < (*models_).size(); i++) {
     if ((*models_)[i]->GetName() == feedback->marker_name) {
@@ -153,7 +153,8 @@ void InteractiveMarkerManager::deleteInteractiveMarker(
 }
 
 void InteractiveMarkerManager::processMouseUpFeedback(
-    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback) {
+    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr
+        &feedback) {
   // Update model that was manipulated the same way
   // as when the MoveModel service is called
   for (unsigned int i = 0; i < models_->size(); i++) {
@@ -175,12 +176,14 @@ void InteractiveMarkerManager::processMouseUpFeedback(
 }
 
 void InteractiveMarkerManager::processMouseDownFeedback(
-    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback) {
+    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr
+        &feedback) {
   manipulating_model_ = true;
 }
 
 void InteractiveMarkerManager::processPoseUpdateFeedback(
-    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr &feedback) {
+    const visualization_msgs::msg::InteractiveMarkerFeedback::ConstSharedPtr
+        &feedback) {
   pose_update_stamp_ = steady_clock_.now();
 }
 
@@ -231,7 +234,8 @@ void InteractiveMarkerManager::update() {
   try {
     dt = (steady_clock_.now() - pose_update_stamp_).seconds();
   } catch (std::runtime_error &ex) {
-    RCLCPP_ERROR(rclcpp::get_logger("flatland"), 
+    RCLCPP_ERROR(
+        rclcpp::get_logger("flatland"),
         "Flatland Interactive Marker Manager runtime error: (%f - %f) [%s]",
         steady_clock_.now().seconds(), pose_update_stamp_.seconds(), ex.what());
   }

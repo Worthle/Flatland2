@@ -6,14 +6,14 @@
 #include <Box2D/Box2D.h>
 #include <flatland_plugins/tricycle_drive_ackermann.h>
 
-#include <cmath>
 #include <flatland_plugins/ros2_compat.h>
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/model_plugin.h>
 #include <flatland_server/yaml_reader.h>
+#include <tf2/utils.h>
+#include <cmath>
 #include <pluginlib/class_list_macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace flatland_plugins {
@@ -32,9 +32,9 @@ void TricycleDriveAckermann::OnInitialize(const YAML::Node& config) {
   string odom_topic = r.Get<string>("odom_pub", "odom");
   string ground_truth_topic =
       r.Get<string>("ground_truth_pub", "ground_truth/odom");
-  string ground_truth_frame_id =
-      r.Get<string>("ground_truth_frame_id", "map");
-  string pose_topic = r.Get<string>("ground_truth_pose_pub", "ground_truth/pose");
+  string ground_truth_frame_id = r.Get<string>("ground_truth_frame_id", "map");
+  string pose_topic =
+      r.Get<string>("ground_truth_pose_pub", "ground_truth/pose");
 
   // noise are in the form of linear x, linear y, angular variances
   vector<double> odom_twist_noise =
@@ -68,17 +68,24 @@ void TricycleDriveAckermann::OnInitialize(const YAML::Node& config) {
   max_steer_angle_ = r.Get<double>("max_steer_angle", 0.0);
 
   // Angular dynamics constraints
-  angular_dynamics_.Configure(r.SubnodeOpt("angular_dynamics", YamlReader::MAP).Node());
+  angular_dynamics_.Configure(
+      r.SubnodeOpt("angular_dynamics", YamlReader::MAP).Node());
 
-  // Accept old configuration location for angular dynamics constraints if present
-  if (angular_dynamics_.velocity_limit_ == 0.0) angular_dynamics_.velocity_limit_ = r.Get<double>("max_angular_velocity", 0.0);
+  // Accept old configuration location for angular dynamics constraints if
+  // present
+  if (angular_dynamics_.velocity_limit_ == 0.0)
+    angular_dynamics_.velocity_limit_ =
+        r.Get<double>("max_angular_velocity", 0.0);
   if (angular_dynamics_.acceleration_limit_ == 0.0) {
-    angular_dynamics_.acceleration_limit_ = r.Get<double>("max_steer_acceleration", 0.0);
-    angular_dynamics_.deceleration_limit_ = angular_dynamics_.acceleration_limit_ ;
+    angular_dynamics_.acceleration_limit_ =
+        r.Get<double>("max_steer_acceleration", 0.0);
+    angular_dynamics_.deceleration_limit_ =
+        angular_dynamics_.acceleration_limit_;
   }
 
   // Linear dynamics constraints
-  linear_dynamics_.Configure(r.SubnodeOpt("linear_dynamics", YamlReader::MAP).Node());
+  linear_dynamics_.Configure(
+      r.SubnodeOpt("linear_dynamics", YamlReader::MAP).Node());
 
   delta_command_ = 0.0;
   theta_f_ = 0.0;
@@ -116,10 +123,18 @@ void TricycleDriveAckermann::OnInitialize(const YAML::Node& config) {
 
   // publish and subscribe to topics
   twist_sub_ =
-      nh_->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(twist_topic, 1, [this](const ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg){ TwistCallback(*msg); });
+      nh_->create_subscription<ackermann_msgs::msg::AckermannDriveStamped>(
+          twist_topic, 1,
+          [this](
+              const ackermann_msgs::msg::AckermannDriveStamped::SharedPtr msg) {
+            TwistCallback(*msg);
+          });
   odom_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1);
-  ground_truth_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(ground_truth_topic, 1);
-  ground_truth_pose_pub_ = nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(pose_topic, 1);
+  ground_truth_pub_ =
+      nh_->create_publisher<nav_msgs::msg::Odometry>(ground_truth_topic, 1);
+  ground_truth_pose_pub_ =
+      nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+          pose_topic, 1);
 
   // init the values for the messages
   ground_truth_msg_.header.frame_id = ground_truth_frame_id;
@@ -150,7 +165,8 @@ void TricycleDriveAckermann::OnInitialize(const YAML::Node& config) {
         normal_distribution<double>(0.0, sqrt(odom_twist_noise[i]));
   }
 
-  RCLCPP_DEBUG(rclcpp::get_logger("TricycleDriveAckermann"),
+  RCLCPP_DEBUG(
+      rclcpp::get_logger("TricycleDriveAckermann"),
       "Initialized with params body(%p %s) front_wj(%p %s) "
       "rear_left_wj(%p %s) rear_right_wj(%p %s) "
       "odom_frame_id(%s) twist_sub(%s) odom_pub(%s) "
@@ -185,8 +201,10 @@ void TricycleDriveAckermann::ComputeJoints() {
     }
 
     // convert anchor is global coordinates to local body coordinates
-    b2Body* wheel_body = joint->physics_joint_->GetBodyA() == body_->physics_body_
-        ? joint->physics_joint_->GetBodyB() : joint->physics_joint_->GetBodyA();
+    b2Body* wheel_body =
+        joint->physics_joint_->GetBodyA() == body_->physics_body_
+            ? joint->physics_joint_->GetBodyB()
+            : joint->physics_joint_->GetBodyA();
     wheel_anchor = wheel_body->GetLocalPoint(wheel_anchor);
     body_anchor = body_->physics_body_->GetLocalPoint(body_anchor);
 
@@ -226,7 +244,6 @@ void TricycleDriveAckermann::ComputeJoints() {
   b2Vec2 front_anchor = get_anchor(front_wj_, &invert_steering_angle_);
   b2Vec2 rear_left_anchor = get_anchor(rear_left_wj_);
   b2Vec2 rear_right_anchor = get_anchor(rear_right_wj_);
-
 
   // calculate the wheelbase and axeltrack. We also need to verify that
   // the rear_center is at the perpendicular intersection between the rear axel
@@ -268,8 +285,7 @@ void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
 
   b2Vec2 position = b2body->GetPosition();
   float angle = b2body->GetAngle();
-  if(!initialized_)
-  {
+  if (!initialized_) {
     initial_position_ = position;
     initial_angle_ = angle;
     initialized_ = true;
@@ -315,24 +331,28 @@ void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
     pose_msg_.pose.pose.position.x = position.x;
     pose_msg_.pose.pose.position.y = position.y;
     pose_msg_.pose.pose.position.z = 0;
-    pose_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    pose_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
     // add the noise to odom messages
     odom_msg_.header.stamp = timekeeper.GetSimTime();
     odom_msg_.pose.pose = ground_truth_msg_.pose.pose;
     // Odometry starts at the spawn pose and uses its initial heading.
     const double dx = position.x - initial_position_.x;
     const double dy = position.y - initial_position_.y;
-    odom_msg_.pose.pose.position.x = cos(initial_angle_) * dx + sin(initial_angle_) * dy;
-    odom_msg_.pose.pose.position.y = -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.x =
+        cos(initial_angle_) * dx + sin(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.y =
+        -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
     ground_truth_msg_.pose.pose.position.x = position.x;
     ground_truth_msg_.pose.pose.position.y = position.y;
-    ground_truth_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    ground_truth_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
 
     odom_msg_.twist.twist = ground_truth_msg_.twist.twist;
     odom_msg_.pose.pose.position.x += noise_gen_[0](rng_);
     odom_msg_.pose.pose.position.y += noise_gen_[1](rng_);
-    odom_msg_.pose.pose.orientation =
-        flatland_plugins::quaternionMsgFromYaw((angle - initial_angle_) + noise_gen_[2](rng_));
+    odom_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(
+        (angle - initial_angle_) + noise_gen_[2](rng_));
     odom_msg_.twist.twist.linear.x += noise_gen_[3](rng_);
     odom_msg_.twist.twist.linear.y += noise_gen_[4](rng_);
     odom_msg_.twist.twist.angular.z += noise_gen_[5](rng_);
@@ -360,7 +380,7 @@ void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
   // subject to:
   //   |δ[t]| <= max_steer_angle_
   //   |dδ[t]| <= angular_dynamics_.velocity_limit_
-  //   |d2δ[t]| <= angular_dynamics_.acceleration_limit_ 
+  //   |d2δ[t]| <= angular_dynamics_.acceleration_limit_
 
   // twist message contains the speed and angle of the front wheel
   delta_command_ = twist_msg_.angular.z;  // target steering angle
@@ -369,11 +389,12 @@ void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
 
   // In the simulation, the equations of motion have to be computed backwards
   // (4) Update the new commanded steering velocity
-  
+
   //     Note: Set target steer velocity = 0 rad/s to avoid overshooting, when
   //           it is possible to reach the commanded steering angle in 1 step
   double d_delta_command = 0.0;
-  double delta_max_one_step = d_delta_ * d_delta_ / 2 / angular_dynamics_.acceleration_limit_;
+  double delta_max_one_step =
+      d_delta_ * d_delta_ / 2 / angular_dynamics_.acceleration_limit_;
   if (angular_dynamics_.acceleration_limit_ == 0.0) {
     delta_max_one_step = fabs(delta_command_ - theta_f_);
   }
@@ -388,14 +409,15 @@ void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
   // (1) Update the new steering angle
   theta_f_ += d_delta_ * dt;
   if (max_steer_angle_ != 0.0) {
-    theta_f_ = DynamicsLimits::Saturate(theta_f_, -max_steer_angle_, max_steer_angle_);
+    theta_f_ =
+        DynamicsLimits::Saturate(theta_f_, -max_steer_angle_, max_steer_angle_);
   }
 
-  RCLCPP_DEBUG_THROTTLE(rclcpp::get_logger("flatland"), *nh_->get_clock(), (0.5)*1000,
-                     "Using new tricycle steering, "
-                     "d_delta = %.4f, twist.x = %.4f, twist.delta = %.4f",
-                     d_delta_, twist_msg_.linear.x,
-                     twist_msg_.angular.z);
+  RCLCPP_DEBUG_THROTTLE(rclcpp::get_logger("flatland"), *nh_->get_clock(),
+                        (0.5) * 1000,
+                        "Using new tricycle steering, "
+                        "d_delta = %.4f, twist.x = %.4f, twist.delta = %.4f",
+                        d_delta_, twist_msg_.linear.x, twist_msg_.angular.z);
 
   // change angle of the front wheel for visualization
 
@@ -439,13 +461,13 @@ void TricycleDriveAckermann::BeforePhysicsStep(const Timekeeper& timekeeper) {
   b2body->SetAngularVelocity(w);
 }
 
-void TricycleDriveAckermann::TwistCallback(const ackermann_msgs::msg::AckermannDriveStamped& msg) {
-  // As descrivbed in https://flatland-simulator.readthedocs.io/en/latest/included_plugins/tricycle_drive.html
+void TricycleDriveAckermann::TwistCallback(
+    const ackermann_msgs::msg::AckermannDriveStamped& msg) {
+  // As descrivbed in
+  // https://flatland-simulator.readthedocs.io/en/latest/included_plugins/tricycle_drive.html
   twist_msg_.linear.x = msg.drive.speed;
   twist_msg_.angular.z = msg.drive.steering_angle;
 }
-
-
 }
 
 PLUGINLIB_EXPORT_CLASS(flatland_plugins::TricycleDriveAckermann,

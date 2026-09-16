@@ -28,7 +28,8 @@ class BoolSensor : public ModelPlugin {
   int collisions_ = 0;          ///< Current number of collisions
   bool hit_something_ = false;  ///< "latch" var to ensure all hits published
 
-  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr publisher_;  ///< For publishing the collisions
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr
+      publisher_;  ///< For publishing the collisions
 
   /**
    * @brief Initialization for the plugin

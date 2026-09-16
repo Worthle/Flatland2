@@ -32,37 +32,37 @@ namespace flatland_plugins {
  */
 class MockDetection : public ModelPlugin {
  public:
-  std::string topic_;     ///< topic to publish the PoseArray detections on
-  Body *body_;            ///< body the camera is mounted on
-  Pose origin_;           ///< camera mount pose w.r.t the body
-  Pose pose_offset_;      ///< offset applied to each target pose, in the
-                          ///< target's own frame (model origin -> face)
-  std::string frame_id_;  ///< camera frame id
-  bool broadcast_tf_;     ///< whether to broadcast camera origin w.r.t body
-  bool broadcast_target_tf_;        ///< broadcast per-target anchored frames
+  std::string topic_;         ///< topic to publish the PoseArray detections on
+  Body *body_;                ///< body the camera is mounted on
+  Pose origin_;               ///< camera mount pose w.r.t the body
+  Pose pose_offset_;          ///< offset applied to each target pose, in the
+                              ///< target's own frame (model origin -> face)
+  std::string frame_id_;      ///< camera frame id
+  bool broadcast_tf_;         ///< whether to broadcast camera origin w.r.t body
+  bool broadcast_target_tf_;  ///< broadcast per-target anchored frames
   std::string target_frame_prefix_;  ///< prefix of the anchored target frames
   std::string world_frame_;          ///< world frame anchoring the targets
-  double update_rate_;    ///< detection update rate (Hz)
-  double min_range_;      ///< minimum detection distance (m)
-  double max_range_;      ///< maximum detection distance (m)
-  double fov_;            ///< full horizontal field of view (rad)
+  double update_rate_;               ///< detection update rate (Hz)
+  double min_range_;                 ///< minimum detection distance (m)
+  double max_range_;                 ///< maximum detection distance (m)
+  double fov_;                       ///< full horizontal field of view (rad)
   double max_target_elevation_;  ///< targets elevated above this (m) are out
                                  ///< of the camera's vertical view
   std::vector<std::string> model_prefixes_;  ///< model name prefixes to detect
-  uint16_t layers_bits_;         ///< layers whose fixtures occlude the view
-  double dropout_probability_;   ///< probability of missing a whole frame
+  uint16_t layers_bits_;        ///< layers whose fixtures occlude the view
+  double dropout_probability_;  ///< probability of missing a whole frame
 
-  std::default_random_engine rng_;                  ///< random generator
-  std::normal_distribution<double> noise_gen_x_;    ///< noise on x
-  std::normal_distribution<double> noise_gen_y_;    ///< noise on y
-  std::normal_distribution<double> noise_gen_yaw_;  ///< noise on yaw
+  std::default_random_engine rng_;                      ///< random generator
+  std::normal_distribution<double> noise_gen_x_;        ///< noise on x
+  std::normal_distribution<double> noise_gen_y_;        ///< noise on y
+  std::normal_distribution<double> noise_gen_yaw_;      ///< noise on yaw
   std::uniform_real_distribution<double> dropout_gen_;  ///< frame dropout roll
 
   UpdateTimer update_timer_;  ///< for controlling the update rate
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr
       detections_publisher_;  ///< PoseArray detections publisher
   std::shared_ptr<tf2_ros::TransformBroadcaster>
-      tf_broadcaster_;                          ///< broadcast camera frame
+      tf_broadcaster_;                              ///< broadcast camera frame
   geometry_msgs::msg::TransformStamped camera_tf_;  ///< body to camera frame
   std::string resolved_frame_id_;  ///< namespaced frame id used in headers
 

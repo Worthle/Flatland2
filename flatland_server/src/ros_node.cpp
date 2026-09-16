@@ -2,7 +2,7 @@
 
 namespace flatland_server {
 
-rclcpp::Node::SharedPtr & ros_node() {
+rclcpp::Node::SharedPtr& ros_node() {
   static rclcpp::Node::SharedPtr node;
   return node;
 }

@@ -8,11 +8,11 @@
 #include <flatland_plugins/ros2_compat.h>
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/model_plugin.h>
+#include <tf2/utils.h>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <pluginlib/class_list_macros.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tf2/utils.h>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 namespace flatland_plugins {
@@ -35,12 +35,12 @@ void DiffDrive::OnInitialize(const YAML::Node& config) {
       reader.Get<std::string>("ground_truth_frame_id", "map");
 
   std::string twist_topic = reader.Get<std::string>("twist_sub", "cmd_vel");
-  std::string odom_topic =
-      reader.Get<std::string>("odom_pub", "odom");
+  std::string odom_topic = reader.Get<std::string>("odom_pub", "odom");
   std::string ground_truth_topic =
       reader.Get<std::string>("ground_truth_pub", "ground_truth/odom");
   std::string twist_pub_topic = reader.Get<std::string>("twist_pub", "twist");
-  std::string pose_topic = reader.Get<std::string>("ground_truth_pose_pub", "ground_truth/pose");
+  std::string pose_topic =
+      reader.Get<std::string>("ground_truth_pose_pub", "ground_truth/pose");
   // noise are in the form of linear x, linear y, angular variances
   std::vector<double> odom_twist_noise =
       reader.GetList<double>("odom_twist_noise", {0, 0, 0}, 3, 3);
@@ -52,16 +52,20 @@ void DiffDrive::OnInitialize(const YAML::Node& config) {
   update_timer_.SetRate(pub_rate);
 
   // Angular dynamics constraints
-  angular_dynamics_.Configure(reader.SubnodeOpt("angular_dynamics", YamlReader::MAP).Node());
+  angular_dynamics_.Configure(
+      reader.SubnodeOpt("angular_dynamics", YamlReader::MAP).Node());
 
   // Linear dynamics constraints
-  linear_dynamics_.Configure(reader.SubnodeOpt("linear_dynamics", YamlReader::MAP).Node());
+  linear_dynamics_.Configure(
+      reader.SubnodeOpt("linear_dynamics", YamlReader::MAP).Node());
 
   // Identified OE model configuration
   use_id_model_ = reader.Get<bool>("use_id_model", false);
   // Always access the OE model keys so EnsureAccessedAllKeys doesn't complain
-  YamlReader lin_oe_reader = reader.SubnodeOpt("linear_oe_model", YamlReader::MAP);
-  YamlReader ang_oe_reader = reader.SubnodeOpt("angular_oe_model", YamlReader::MAP);
+  YamlReader lin_oe_reader =
+      reader.SubnodeOpt("linear_oe_model", YamlReader::MAP);
+  YamlReader ang_oe_reader =
+      reader.SubnodeOpt("angular_oe_model", YamlReader::MAP);
 
   if (use_id_model_) {
     std::vector<double> lin_B = lin_oe_reader.GetList<double>("B", 1, -1);
@@ -83,7 +87,8 @@ void DiffDrive::OnInitialize(const YAML::Node& config) {
     oe_linear_output_ = 0.0;
     oe_angular_output_ = 0.0;
 
-    RCLCPP_INFO(rclcpp::get_logger("flatland"), "DiffDrive: Identified OE models enabled");
+    RCLCPP_INFO(rclcpp::get_logger("flatland"),
+                "DiffDrive: Identified OE models enabled");
   }
 
   // by default the covariance diagonal is the variance of actual noise
@@ -112,18 +117,23 @@ void DiffDrive::OnInitialize(const YAML::Node& config) {
   }
 
   // publish and subscribe to topics
-  twist_sub_ = nh_->create_subscription<geometry_msgs::msg::Twist>(twist_topic, 1, [this](const geometry_msgs::msg::Twist::SharedPtr msg){ TwistCallback(*msg); });
+  twist_sub_ = nh_->create_subscription<geometry_msgs::msg::Twist>(
+      twist_topic, 1, [this](const geometry_msgs::msg::Twist::SharedPtr msg) {
+        TwistCallback(*msg);
+      });
   if (enable_odom_pub_) {
     odom_pub_ = nh_->create_publisher<nav_msgs::msg::Odometry>(odom_topic, 1);
     ground_truth_pub_ =
         nh_->create_publisher<nav_msgs::msg::Odometry>(ground_truth_topic, 1);
-    ground_truth_pose_pub_ = nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(pose_topic, 1);
-
+    ground_truth_pose_pub_ =
+        nh_->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
+            pose_topic, 1);
   }
 
   if (enable_twist_pub_) {
-    twist_pub_ = nh_->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
-        twist_pub_topic, 1);
+    twist_pub_ =
+        nh_->create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
+            twist_pub_topic, 1);
   }
 
   // init the values for the messages
@@ -158,15 +168,15 @@ void DiffDrive::OnInitialize(const YAML::Node& config) {
   }
 
   RCLCPP_DEBUG(rclcpp::get_logger("DiffDrive"),
-                  "Initialized with params body(%p %s) odom_frame_id(%s) "
-                  "twist_sub(%s) odom_pub(%s) ground_truth_pub(%s) "
-                  "odom_pose_noise({%f,%f,%f}) odom_twist_noise({%f,%f,%f}) "
-                  "pub_rate(%f)\n",
-                  body_, body_->name_.c_str(), odom_frame_id.c_str(),
-                  twist_topic.c_str(), odom_topic.c_str(),
-                  ground_truth_topic.c_str(), odom_pose_noise[0],
-                  odom_pose_noise[1], odom_pose_noise[2], odom_twist_noise[0],
-                  odom_twist_noise[1], odom_twist_noise[2], pub_rate);
+               "Initialized with params body(%p %s) odom_frame_id(%s) "
+               "twist_sub(%s) odom_pub(%s) ground_truth_pub(%s) "
+               "odom_pose_noise({%f,%f,%f}) odom_twist_noise({%f,%f,%f}) "
+               "pub_rate(%f)\n",
+               body_, body_->name_.c_str(), odom_frame_id.c_str(),
+               twist_topic.c_str(), odom_topic.c_str(),
+               ground_truth_topic.c_str(), odom_pose_noise[0],
+               odom_pose_noise[1], odom_pose_noise[2], odom_twist_noise[0],
+               odom_twist_noise[1], odom_twist_noise[2], pub_rate);
 }
 
 void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
@@ -180,7 +190,8 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
   // Apply dynamics limits
   double dt = timekeeper.GetStepSize();
 
-  if (use_id_model_ && linear_oe_model_.IsConfigured() && angular_oe_model_.IsConfigured()) {
+  if (use_id_model_ && linear_oe_model_.IsConfigured() &&
+      angular_oe_model_.IsConfigured()) {
     // Use identified OE models
     // The OE models run at their own sample time Ts. Accumulate physics dt
     // and step the model when enough time has elapsed.
@@ -197,8 +208,10 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
     angular_velocity_ = oe_angular_output_;
   } else {
     // Original behavior: apply dynamics limits directly
-    linear_velocity_ = linear_dynamics_.Limit(linear_velocity_, twist_msg_.linear.x, dt);
-    angular_velocity_ = angular_dynamics_.Limit(angular_velocity_, twist_msg_.angular.z, dt);
+    linear_velocity_ =
+        linear_dynamics_.Limit(linear_velocity_, twist_msg_.linear.x, dt);
+    angular_velocity_ =
+        angular_dynamics_.Limit(angular_velocity_, twist_msg_.angular.z, dt);
   }
 
   // we apply the twist velocities, this must be done every physics step to make
@@ -222,8 +235,7 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
   b2body->SetLinearVelocity(linear_vel_cm);
   b2body->SetAngularVelocity(angular_vel);
 
-  if(!initialized_)
-  {
+  if (!initialized_) {
     initial_position_ = position;
     initial_angle_ = angle;
     initialized_ = true;
@@ -264,7 +276,8 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
     pose_msg_.pose.pose.position.x = position.x;
     pose_msg_.pose.pose.position.y = position.y;
     pose_msg_.pose.pose.position.z = 0;
-    pose_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    pose_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
 
     // add the noise to odom messages
     odom_msg_.header.stamp = timekeeper.GetSimTime();
@@ -272,17 +285,20 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
     // Odometry starts at the spawn pose and uses its initial heading.
     const double dx = position.x - initial_position_.x;
     const double dy = position.y - initial_position_.y;
-    odom_msg_.pose.pose.position.x = cos(initial_angle_) * dx + sin(initial_angle_) * dy;
-    odom_msg_.pose.pose.position.y = -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.x =
+        cos(initial_angle_) * dx + sin(initial_angle_) * dy;
+    odom_msg_.pose.pose.position.y =
+        -sin(initial_angle_) * dx + cos(initial_angle_) * dy;
     ground_truth_msg_.pose.pose.position.x = position.x;
     ground_truth_msg_.pose.pose.position.y = position.y;
-    ground_truth_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(angle);
+    ground_truth_msg_.pose.pose.orientation =
+        flatland_plugins::quaternionMsgFromYaw(angle);
 
     odom_msg_.twist.twist = ground_truth_msg_.twist.twist;
     odom_msg_.pose.pose.position.x += (noise_gen_[0](rng_));
     odom_msg_.pose.pose.position.y += (noise_gen_[1](rng_));
-    odom_msg_.pose.pose.orientation =
-        flatland_plugins::quaternionMsgFromYaw((angle - initial_angle_) + noise_gen_[2](rng_));
+    odom_msg_.pose.pose.orientation = flatland_plugins::quaternionMsgFromYaw(
+        (angle - initial_angle_) + noise_gen_[2](rng_));
     odom_msg_.twist.twist.linear.x += noise_gen_[3](rng_);
     odom_msg_.twist.twist.linear.y += noise_gen_[4](rng_);
     odom_msg_.twist.twist.angular.z += noise_gen_[5](rng_);
@@ -325,7 +341,6 @@ void DiffDrive::BeforePhysicsStep(const Timekeeper& timekeeper) {
       tf_broadcaster->sendTransform(odom_tf);
     }
   }
-
 }
 }
 

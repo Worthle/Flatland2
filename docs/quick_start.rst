@@ -5,10 +5,8 @@
 
 Quick Start
 ====================================
-This guide creates a small world for the ROS 2 Humble core. For ready-to-run
-robots, install the separate ``flatland_examples`` companion package and run
-``ros2 launch flatland_examples simulation.launch.py show_viz:=false``.
-The core metapackage is named ``flatland``; it contains no demo launch files.
+For ready-to-run robots, use ``flatland_examples`` and launch
+``ros2 launch flatland_examples simulation.launch.py show_viz:=true``.
 
 Flatland uses YAML files to setup the simulation, much like how Gazebo uses URDF
 files.

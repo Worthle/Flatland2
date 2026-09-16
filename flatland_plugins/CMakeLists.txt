@@ -4,6 +4,8 @@ project(flatland_plugins)
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 17)
 endif()
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
 
 find_package(ament_cmake REQUIRED)
@@ -92,9 +94,7 @@ target_link_libraries(flatland_plugins_lib
 # Plugin base classes (ModelPlugin / WorldPlugin) live in flatland_server
 pluginlib_export_plugin_description_file(flatland_server flatland_plugins.xml)
 
-# offline verification harness for the NARX system-id port: replays a
-# recorded command csv so the C++ free-run can be diffed against the
-# SystemID python reference (see system_id_drive.h)
+# Replay command CSV files through a NARX model.
 add_executable(narx_sim_tool src/narx_sim_tool.cpp)
 target_link_libraries(narx_sim_tool flatland_plugins_lib)
 
@@ -116,4 +116,15 @@ install(FILES flatland_plugins.xml LICENSE
 ament_export_include_directories(include)
 ament_export_libraries(flatland_plugins_lib)
 ament_export_dependencies(${dependencies})
+
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_dynamics test/test_dynamics.cpp)
+  target_link_libraries(test_dynamics flatland_plugins_lib)
+  target_compile_definitions(test_dynamics PRIVATE
+    NARX_FIXTURE="${CMAKE_CURRENT_SOURCE_DIR}/test/fixtures/narx.yaml")
+  ament_add_gtest(test_pcd_sampler test/test_pcd_sampler.cpp)
+  target_link_libraries(test_pcd_sampler flatland_plugins_lib)
+endif()
+
 ament_package()

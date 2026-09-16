@@ -48,14 +48,14 @@
 #include <flatland_server/debug_visualization.h>
 #include <flatland_server/layer.h>
 #include <flatland_server/model.h>
+#include <flatland_server/ros_node.h>
 #include <flatland_server/service_manager.h>
 #include <flatland_server/world.h>
-#include <flatland_server/ros_node.h>
-#include <rclcpp/rclcpp.hpp>
+#include <chrono>
 #include <exception>
 #include <limits>
+#include <rclcpp/rclcpp.hpp>
 #include <string>
-#include <chrono>
 #include <thread>
 
 namespace flatland_server {
@@ -98,8 +98,9 @@ void SimulationManager::Main(bool benchmark) {
   ServiceManager service_manager(this, world_);
 
   // Track cycle utilization and compensate the next sleep for elapsed work.
-  std::chrono::duration<double> start = std::chrono::steady_clock::now().time_since_epoch();
-  std::chrono::duration<double> expected_cycle_time(1.0/update_rate_);
+  std::chrono::duration<double> start =
+      std::chrono::steady_clock::now().time_since_epoch();
+  std::chrono::duration<double> expected_cycle_time(1.0 / update_rate_);
   std::chrono::duration<double> actual_cycle_time(0.0);
   using seconds_d = std::chrono::duration<double, std::ratio<1, 1>>;
   double seconds_taken = 0;
@@ -116,10 +117,11 @@ void SimulationManager::Main(bool benchmark) {
                    (expected_cycle_time.count() / 2.0),
                viz_update_period);
     } catch (std::runtime_error& ex) {
-      RCLCPP_ERROR(rclcpp::get_logger("SimMan"),
-                   "Flatland runtime error: [%s]", ex.what());
+      RCLCPP_ERROR(rclcpp::get_logger("SimMan"), "Flatland runtime error: [%s]",
+                   ex.what());
     }
-    std::chrono::duration<double> update_start = std::chrono::steady_clock::now().time_since_epoch();
+    std::chrono::duration<double> update_start =
+        std::chrono::steady_clock::now().time_since_epoch();
     bool update_viz = ((f >= 0.0) && (f < expected_cycle_time.count()));
 
     world_->Update(timekeeper_);  // Step physics by ros cycle time
@@ -132,21 +134,28 @@ void SimulationManager::Main(bool benchmark) {
 
     rclcpp::spin_some(ros_node());
 
-    seconds_taken += (seconds_d(std::chrono::steady_clock::now().time_since_epoch()) - update_start).count();
+    seconds_taken +=
+        (seconds_d(std::chrono::steady_clock::now().time_since_epoch()) -
+         update_start)
+            .count();
 
     // Use monotonic wall time to pace simulation steps.
     {
       std::chrono::duration<double> expected_end = start + expected_cycle_time;
-      std::chrono::duration<double> actual_end = std::chrono::steady_clock::now().time_since_epoch();
-      std::chrono::duration<double> sleep_time = expected_end - actual_end;  //calculate the time we'll sleep for
+      std::chrono::duration<double> actual_end =
+          std::chrono::steady_clock::now().time_since_epoch();
+      std::chrono::duration<double> sleep_time =
+          expected_end - actual_end;  // calculate the time we'll sleep for
       actual_cycle_time = actual_end - start;
-      start = expected_end;  //make sure to reset our start time
-      if(sleep_time.count() <= 0.0) { //if we've taken too much time we won't sleep
+      start = expected_end;  // make sure to reset our start time
+      if (sleep_time.count() <=
+          0.0) {  // if we've taken too much time we won't sleep
         if (actual_end > expected_end + expected_cycle_time) {
           start = actual_end;
         }
-      } else {  // sleep, unless we're in a benchmark
-        if (benchmark == false) {   // if benchmark==true, skip sleeping to run as fast as possible
+      } else {                     // sleep, unless we're in a benchmark
+        if (benchmark == false) {  // if benchmark==true, skip sleeping to run
+                                   // as fast as possible
           std::this_thread::sleep_for(sleep_time);
         } else {
           start = actual_end;
@@ -158,7 +167,8 @@ void SimulationManager::Main(bool benchmark) {
 
     double cycle_time = actual_cycle_time.count() * 1000;
     double expected_cycle_time_ms = expected_cycle_time.count() * 1000;
-    double cycle_util = cycle_time / expected_cycle_time_ms * 100;  // in percent
+    double cycle_util =
+        cycle_time / expected_cycle_time_ms * 100;  // in percent
     double factor = timekeeper_.GetStepSize() * 1000 / expected_cycle_time_ms;
     min_cycle_util = std::min(cycle_util, min_cycle_util);
     if (iterations_ > 10) max_cycle_util = std::max(cycle_util, max_cycle_util);
@@ -169,7 +179,9 @@ void SimulationManager::Main(bool benchmark) {
         "utilization: min %.1f%% max %.1f%% ave %.1f%%  factor: %.1f",
         min_cycle_util, max_cycle_util, filtered_cycle_util, factor);
   }
-  // std::cout << "Simulation loop ended. " << iterations_ << " iterations in " << seconds_taken << " seconds, " <<  (double)iterations_/seconds_taken << " iterations/sec" << std::endl;
+  // std::cout << "Simulation loop ended. " << iterations_ << " iterations in "
+  // << seconds_taken << " seconds, " <<  (double)iterations_/seconds_taken << "
+  // iterations/sec" << std::endl;
 
   delete world_;
 }

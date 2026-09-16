@@ -1,0 +1,4 @@
+---
+# Optional heuristics flag guarded Box2D fields and pluginlib destructor calls.
+Checks: 'clang-analyzer-*,-clang-analyzer-optin.cplusplus.UninitializedObject,-clang-analyzer-optin.cplusplus.VirtualCall'
+WarningsAsErrors: '*'

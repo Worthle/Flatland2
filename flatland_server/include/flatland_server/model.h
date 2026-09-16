@@ -91,7 +91,7 @@ class Model : public Entity {
    * @brief Return the type of entity
    * @return Model type
    */
-  EntityType Type() const { return EntityType::MODEL; }
+  EntityType Type() const override { return EntityType::MODEL; }
 
   /**
    * @brief load bodies to this model, throws exceptions upon failure

@@ -1,8 +1,3 @@
-.. image:: _static/flatland_logo2.png
-    :width: 250px
-    :align: right
-    :target: _static/flatland_logo2.png
-
 Quick Start
 ====================================
 For ready-to-run robots, use ``flatland_examples`` and launch

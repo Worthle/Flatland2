@@ -1,9 +1,3 @@
-.. image:: ../_static/flatland_logo2.png
-    :width: 250px
-    :align: right
-    :target: ../_static/flatland_logo2.png
-
-
 GPS
 ==========
 This plugin provides a simple simulation of a perfectly-accurate GPS receiver.

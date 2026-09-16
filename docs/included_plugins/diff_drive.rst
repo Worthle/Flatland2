@@ -1,9 +1,3 @@
-.. image:: ../_static/flatland_logo2.png
-    :width: 250px
-    :align: right
-    :target: ../_static/flatland_logo2.png
-
-
 Diff Drive
 ==========
 This plugin provides common features for a differential drive robots. All

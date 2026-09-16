@@ -1,8 +1,3 @@
-.. image:: ../_static/flatland_logo2.png
-    :width: 250px
-    :align: right
-    :target: ../_static/flatland_logo2.png
-
 Configuring Layers
 ==================
 In Flatland, a layer represents the static environment features in the simulation,

@@ -1,8 +1,3 @@
-.. image:: ../_static/flatland_logo2.png
-    :width: 250px
-    :align: right
-    :target: ../_static/flatland_logo2.png
-
 Writing Model Plugins
 =====================
 Flatland is designed with extensibility in mind. Users can write their own Plugins

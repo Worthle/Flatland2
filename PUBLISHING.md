@@ -39,17 +39,17 @@ Use normal GitHub HTTPS or SSH authentication. No force push is needed.
 On GitHub, select `flatland2` and share its branch URL. Optionally make it your
 fork's default branch so visitors see Flatland 2 immediately. A suitable repository
 description is: "Community ROS 2 Humble extension of Avidbots Flatland with
-warehouse demos, vehicle plugins and mock sensors."
+vehicle plugins, mock sensors and RViz2 visualization."
 
 ## 3. Keep working on the fork
 
 Make future Flatland edits in this checkout, then commit and push to `origin`.
 The original combined workspace is a separate copy, not a linked worktree;
 changes there do not synchronize automatically. This checkout uses the Docker
-image tag `flatland2:humble-fork`, so rebuilding it does not replace the original
-workspace's `flatland2:humble` image. Compose derives its project name from this
-checkout's folder. Both demos use host ROS networking; stop one before running
-the other, or assign different `ROS_DOMAIN_ID` values.
+image tag `flatland2:humble-core`, so rebuilding it does not replace the original
+workspace's `flatland2:humble` image. The companion examples use `flatland2:humble-examples`. Their Compose project
+uses host ROS networking; stop another simulator before running it, or assign
+different `ROS_DOMAIN_ID` values.
 
 ```bash
 git fetch upstream
@@ -66,3 +66,17 @@ Publishing a fork does not require an upstream pull request. If you want Avidbot
 to adopt changes, see [UPSTREAM.md](UPSTREAM.md) and propose a focused contribution
 against a target branch agreed with their maintainers. Only those maintainers
 can decide whether the upstream project should host a `flatland2` branch.
+
+## Publish examples separately
+
+The sibling `flatland_examples/` checkout is a separate project, with one ROS
+package of the same name. Publish it independently when ready; do not place it
+inside this core repository. Its Dockerfile extends a core image and its native
+build uses the core packages from the same colcon workspace.
+
+The READMEs currently link between the local sibling folders `Flatland2-share`
+and `flatland_examples`. After choosing the public repository locations, replace
+those sibling links with the actual repository URLs in both READMEs and the
+examples attribution page. For remote builds, publish a matching core image and
+set `FLATLAND_CORE_IMAGE` to its immutable tag or digest. No example repository
+or container registry URL is assumed here.

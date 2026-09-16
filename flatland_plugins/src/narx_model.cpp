@@ -1,6 +1,6 @@
 // Copyright (c) 2026, Levent Soysal (Worthle).
 // SPDX-License-Identifier: BSD-3-Clause
-// Full license notices: LICENSE and SOURCE_NOTICES.
+// Full license notices: LICENSE.
 
 #include <flatland_plugins/narx_model.h>
 

@@ -1,7 +1,7 @@
 // Copyright (c) 2017, Avidbots Corp.
 // Copyright (c) 2026, Levent Soysal (Worthle).
 // SPDX-License-Identifier: BSD-3-Clause
-// Full license notices: LICENSE and SOURCE_NOTICES.
+// Full license notices: LICENSE.
 
 #include <Box2D/Box2D.h>
 #include <flatland_plugins/tricycle_drive.h>

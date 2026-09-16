@@ -109,7 +109,7 @@ install(TARGETS narx_sim_tool
 install(DIRECTORY include/
   DESTINATION include
 )
-install(FILES flatland_plugins.xml LICENSE SOURCE_NOTICES
+install(FILES flatland_plugins.xml LICENSE
   DESTINATION share/${PROJECT_NAME}
 )
 

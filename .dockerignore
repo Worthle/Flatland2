@@ -2,10 +2,10 @@
 *
 !Dockerfile
 !docker-entrypoint.sh
+!tests/
+!tests/**
 !flatland/
 !flatland/**
-!flatland_core/
-!flatland_core/**
 !flatland_msgs/
 !flatland_msgs/**
 !flatland_plugins/

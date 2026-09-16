@@ -1,6 +1,6 @@
 // Copyright (c) 2021, Avidbots Corp.
 // SPDX-License-Identifier: BSD-3-Clause
-// Full license notices: LICENSE and SOURCE_NOTICES.
+// Full license notices: LICENSE.
 
 #include "flatland_plugins/dynamics_limits.h"
 

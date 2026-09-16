@@ -1,5 +1,0 @@
-properties: {velocity_iterations: 10, position_iterations: 10}
-layers:
-- name: warehouse
-  map: warehouse.yaml
-  color: [0.4, 0.45, 0.5, 1]

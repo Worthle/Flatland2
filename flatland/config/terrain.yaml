@@ -1,9 +1,0 @@
-type: TerrainModifier
-name: terrain
-body: base_link
-seed: 7
-patches:
-- name: rough_floor
-  box: [-1, -6, 1, -4] # map positions
-  slip: {enable: true, s_max_v: 0.3, s_max_w: 0.25, hold_time: 0.4, drift_max: 0.1}
-  rubble: {enable: true, amp_xy: 0.03, amp_yaw: 0.05, f_min: 5, f_max: 12}

@@ -64,4 +64,27 @@ messages.
       layers: ["layer_1", "layer_2", "layer_3"]
       update_rate: 100
       noise_std_dev: 0.01
-      
+
+Flatland 2 ROS 2 options
+------------------------
+
+The ROS 2 output type is ``sensor_msgs/msg/LaserScan``. The following optional
+keys can be added to a ``Laser`` entry alongside the required ``body``,
+``range`` and ``angle`` configuration above:
+
+.. code-block:: yaml
+
+  always_publish: false       # default false; scan even without subscribers if true
+  upside_down: false          # default false; inverted scan mount
+  ignore_bodies: []           # default []; names of bodies in this same model
+  max_body_elevation: .inf    # default .inf; filter bodies above this elevation, m
+
+``upside_down`` negates the ray angles used in the body plane and applies a
+pi-radian roll to the body-to-sensor transform. ``ignore_bodies`` explicitly
+excludes named bodies belonging to the sensor's model; nonexistent names are
+rejected. ``max_body_elevation`` ignores a body's fixtures when its elevation
+metadata exceeds the threshold, for example when a payload is lifted. This
+is a height filter around planar ray casting, not a physical 3D scan-plane
+intersection test.
+
+For a point cloud rather than a LaserScan, see :doc:`mock_lidar3d`.

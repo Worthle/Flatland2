@@ -39,13 +39,13 @@ velocities and odometries are w.r.t. the robot origin
       # commands
       twist_sub: cmd_vel
 
-      # optional, defaults to "odometry/filtered", the topic to advertise for
+      # optional, defaults to "odom", the topic to advertise for
       # publish noisy odometry
-      odom_pub: odometry/filtered
+      odom_pub: odom
 
-      # optional, defaults to "odometry/ground_truth", the topic to advertise for publish
+      # optional, defaults to "ground_truth/odom", the topic to advertise for publish
       # no noise ground truth odometry
-      ground_truth_pub: odometry/ground_truth
+      ground_truth_pub: ground_truth/odom
 
       # optional, defaults to "twist", the topic to publish noisy local frame velocity
       # that simulates encoder readings
@@ -86,9 +86,57 @@ velocities and odometries are w.r.t. the robot origin
       # must have length of 36, represents a 6x6 covariance matrix for rates x, 
       # y, z, roll, pitch, yaw. This does not involve in any of the noise 
       # calculation, it is simply the output values of odometry twist covariance
-      odom_twist_covariance: [0, 0, 0, 0, 0, 0
-                             0, 0, 0, 0, 0, 0
-                             0, 0, 0, 0, 0, 0
-                             0, 0, 0, 0, 0, 0
-                             0, 0, 0, 0, 0, 0
+      odom_twist_covariance: [0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0,
+                             0, 0, 0, 0, 0, 0,
                              0, 0, 0, 0, 0, 0]
+
+Flatland 2 ROS 2 extensions
+---------------------------
+
+The current ROS 2 defaults are ``odom_pub: odom`` and
+``ground_truth_pub: ground_truth/odom``. There is also a
+``ground_truth_pose_pub`` topic (default
+``ground_truth/pose``) carrying ``geometry_msgs/msg/PoseWithCovarianceStamped``.
+See :doc:`drive_options` for frame conventions, publication switches,
+``enable_odom_tf_pub``, and noise/covariance options. Commands arrive as
+``geometry_msgs/msg/Twist`` and persist until replaced by another command.
+
+Optional ``linear_dynamics`` and ``angular_dynamics`` maps accept
+``velocity_limit``, ``acceleration_limit`` and ``deceleration_limit`` as described
+in :doc:`drive_options`. The angular map limits body yaw rate, not steering angle.
+
+The ``use_id_model`` option (default false) selects two independent discrete
+output-error (OE) response models, one for forward speed and one for yaw rate.
+When enabled, both maps below are required, and they replace the dynamics-limit
+path. Add these keys inside the ``DiffDrive`` entry:
+
+.. code-block:: yaml
+
+  use_id_model: true
+  # Synthetic first-order examples, not measured vehicle coefficients.
+  linear_oe_model:
+    B: [0.2]
+    F: [-0.8]
+    nk: 0
+    Ts: 0.1
+  angular_oe_model:
+    B: [0.2]
+    F: [-0.8]
+    nk: 0
+    Ts: 0.1
+
+``B`` contains numerator coefficients. ``F`` contains feedback coefficients
+**without** the leading one. The implemented recurrence is
+``y(k) = sum(B[i] * u(k - nk - i)) - sum(F[j] * y(k - 1 - j))``.
+Both lists must be nonempty in the plugin YAML. ``nk`` is a nonnegative delay
+in samples and ``Ts`` is a finite positive sample period in seconds, equal for
+both models. Histories start at zero; the plugin accumulates physics time to
+step the models at ``Ts`` and holds each result between updates. There is no
+built-in command timeout or learned-model stability validation.
+
+Use :doc:`diff_drive_caster` for passive caster disturbances, or
+:doc:`system_id_drive` for coupled polynomial NARX models and Ackermann input.
+These are alternative drive plugins; do not stack them on the same body.

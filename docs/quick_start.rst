@@ -5,7 +5,10 @@
 
 Quick Start
 ====================================
-Here is a quick guide for setting up 2D simulator.
+This guide creates a small world for the ROS 2 Humble core. For ready-to-run
+robots, install the separate ``flatland_examples`` companion package and run
+``ros2 launch flatland_examples simulation.launch.py show_viz:=false``.
+The core metapackage is named ``flatland``; it contains no demo launch files.
 
 Flatland uses YAML files to setup the simulation, much like how Gazebo uses URDF
 files.
@@ -82,11 +85,12 @@ files.
         name: turtlebot_drive 
         body: base
 
-4. Finally, after having the Flatland packages installed. Run the launch file
-   with the path to the world.yaml. You should be able to see the flatland_viz
-   window with the map and the robot. You can send `Twist <http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html>`_
+4. After building the core and sourcing the workspace, start the server with
+   the absolute path to world.yaml. You can send `Twist <http://docs.ros.org/api/geometry_msgs/html/msg/Twist.html>`_
    commands to /cmd_vel to move the robot.
 
   .. code-block:: bash
 
-    $ roslaunch flatland_server server.launch world_path:=/path/to/world.yaml
+    ros2 run flatland_server flatland_server --ros-args \
+      -p world_path:=/absolute/path/to/world.yaml \
+      -p update_rate:=100.0 -p step_size:=0.01

@@ -1,0 +1,18 @@
+bodies:
+  - name: base_link
+    type: dynamic
+    footprints:
+      - type: circle
+        radius: 0.2
+        density: 1.0
+plugins:
+  - type: DiffDrive
+    name: drive
+    body: base_link
+    pub_rate: 50
+  - type: Laser
+    name: laser
+    body: base_link
+    range: 10
+    update_rate: 20
+    angle: {min: -3.14159, max: 3.14159, increment: 0.0174533}

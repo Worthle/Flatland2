@@ -1,7 +1,7 @@
 // Copyright (c) 2017, Avidbots Corp.
 // Copyright (c) 2026, Levent Soysal (Worthle).
 // SPDX-License-Identifier: BSD-3-Clause
-// Full license notices: LICENSE and SOURCE_NOTICES.
+// Full license notices: LICENSE.
 
 #include <flatland_msgs/msg/collision.hpp>
 #include <flatland_msgs/msg/collisions.hpp>

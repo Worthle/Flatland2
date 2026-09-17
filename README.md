@@ -1,14 +1,22 @@
 # Flatland 2
 
 ROS 2 Humble extensions to [Avidbots Flatland](https://github.com/avidbots/flatland),
-maintained by [Levent Soysal (Worthle)](https://github.com/Worthle).
+developed by [Levent Soysal (Worthle)](https://github.com/Worthle).
 
-## Plugins
+<table>
+  <tr>
+    <td><img src="docs/images/3d_lidar.gif" alt="Robot driving through the factory with its mock 3D lidar point cloud visible" width="400" height="225"></td>
+    <td><img src="docs/images/forklift.gif" alt="Forklift picking up, lifting, and carrying a pallet" width="400" height="225"></td>
+  </tr>
+</table>
+
+
+## New Plugins
 
 - **Drives:** `DiffDriveCaster`, `TricycleDriveAckermann`, `OmniDrive`, and
   `SystemIdDrive` for identified NARX dynamics. `DiffDrive` supports OE response models.
 - **Forks and payloads:** `Forklift`, `LinkAttacher`, and `ForkController`.
-- **Sensors:** `Imu`, `MockLidar3D`, and `MockDetection`; additional body and
+- **Sensors:** `MockLidar3D`, and `MockDetection`; additional body and
   elevation filters for `Laser`.
 - **Terrain:** `TerrainModifier` for slip, drift, rubble, and slope effects.
 
@@ -23,6 +31,7 @@ Flatland debug displays automatically.
 
 See [visualization](docs/visualization.rst) for configuration. Physics remains
 planar; height and 3D sensor outputs do not add 3D rigid-body dynamics.
+
 
 ## Build
 

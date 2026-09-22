@@ -9,6 +9,7 @@ developed by [Levent Soysal (Worthle)](https://github.com/Worthle).
   <tr>
     <td><img src="docs/images/3d_lidar.gif" alt="Robot driving through the factory with its mock 3D lidar point cloud visible" width="400" height="225"></td>
     <td><img src="docs/images/forklift.gif" alt="Forklift picking up, lifting, and carrying a pallet" width="400" height="225"></td>
+    <td><img src="docs/images/mock_detection.gif" alt="Robot turning toward a pallet and box with mock detection poses highlighted" width="400" height="225"></td>
   </tr>
 </table>
 

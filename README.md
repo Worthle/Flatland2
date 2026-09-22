@@ -1,5 +1,3 @@
-# Flatland 2
-
 <p align="center">
   <img src="docs/images/final_logo.png" alt="Flatland 2 logo" width="800">
 </p>

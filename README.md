@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="docs/images/final_logo.png" alt="Flatland 2 logo" width="800">
+  <img src="docs/images/final_logo_transparent.png" alt="Flatland 2 logo" width="800">
 </p>
 
 ROS 2 Humble extensions to [Avidbots Flatland](https://github.com/avidbots/flatland),

@@ -1,5 +1,9 @@
 # Flatland 2
 
+<p align="center">
+  <img src="docs/images/final_logo.png" alt="Flatland 2 logo" width="800">
+</p>
+
 ROS 2 Humble extensions to [Avidbots Flatland](https://github.com/avidbots/flatland),
 developed by [Levent Soysal (Worthle)](https://github.com/Worthle).
 
